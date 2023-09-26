@@ -7,8 +7,6 @@ struct NN {
     apps: Vec<Matrix<f64>>,
 }
 
-// trait __NN {}
-
 impl NN {
     fn new(layers: &[usize]) -> Self {
         let depth = layers.len();
@@ -58,12 +56,22 @@ impl NN {
         self.apps[self.len()].row(0)
     }
 
-    fn __diff(&self, expect: &[f64]) {
+    fn __diff(&self, expect: &[f64]) -> f64{
         assert!(self.output().len()==expect.len());
         let mut diff = 0.0;
         for (idx,output) in self.output().iter().enumerate() {
             diff += (output-expect[idx]).powi(2);
         }
+        diff
     }
 
+    fn diff(&mut self,inputs:&Vec<&[f64]>, expects: &Vec<&[f64]>) -> f64 {
+        assert!(inputs.len()==expects.len());
+        let mut diff = 0.0;
+        for round in 0..inputs.len() {
+            self.set(inputs[round]);
+            diff += self.__diff(expects[round])
+        }
+        diff
+    }
 }

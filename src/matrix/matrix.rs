@@ -1,11 +1,11 @@
 use super::sigmoid;
 
 #[derive(Debug)]
-struct Matrix<T> {
+pub struct Matrix<T> {
     el: Box<Vec<Vec<T>>>,
 }
 
-trait __Matrix<T> {
+pub trait __Matrix<T> {
     fn new(row: usize, col: usize) -> Self;
     fn at(&self, row: usize, col: usize) -> T;
     fn at_mut(&mut self, row: usize, col: usize) -> &mut T;

@@ -33,4 +33,37 @@ impl NN {
             apps,
         };
     }
+
+    fn len(&self) -> usize {
+        self.weights.len()
+    }
+
+    fn process(&mut self) {
+        for idx in 0..self.len() {
+            let apps = self.apps[idx].clone();
+            self.apps[idx+1].dot(&apps,&self.weights[idx]);
+            self.apps[idx+1].sum(&self.biases[idx]);
+            self.apps[idx+1].sigmoid()
+        }
+    }
+
+    fn set(&mut self,input:&[f64]) {
+        assert!(input.len()==self.apps[0].len_col());
+        for (idx, r) in self.apps[0].row_mut(0).iter_mut().enumerate() {
+            *r = input[idx];
+        }
+    }
+
+    fn output(&self) -> &[f64] {
+        self.apps[self.len()].row(0)
+    }
+
+    fn __diff(&self, expect: &[f64]) {
+        assert!(self.output().len()==expect.len());
+        let mut diff = 0.0;
+        for (idx,output) in self.output().iter().enumerate() {
+            diff += (output-expect[idx]).powi(2);
+        }
+    }
+
 }

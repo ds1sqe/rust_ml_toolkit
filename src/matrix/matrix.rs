@@ -1,4 +1,4 @@
-use super::sigmoid;
+use crate::common::sigmoid;
 
 #[derive(Debug)]
 pub struct Matrix<T> {
@@ -12,11 +12,12 @@ pub trait __Matrix<T> {
     fn len_row(&self) -> usize;
     fn len_col(&self) -> usize;
     fn row(&self, row: usize) -> &[T];
+    fn row_mut(&mut self, row: usize) -> &mut [T];
     fn col(&self, col: usize) -> Vec<&T>;
     fn rand(&mut self);
     fn fill(&mut self, x: T);
-    fn sum(&mut self, with: Self);
-    fn dot(&mut self, mat_a: Self, mat_b: Self);
+    fn sum(&mut self, with: &Self);
+    fn dot(&mut self, mat_a: &Self, mat_b: &Self);
     fn sigmoid(&mut self);
 }
 
@@ -55,6 +56,11 @@ impl __Matrix<f64> for Matrix<f64> {
         assert!(self.len_row() > row);
         return &self.el[row];
     }
+    fn row_mut(&mut self, row: usize) -> &mut [f64] {
+        assert!(self.len_row() > row);
+        return &mut self.el[row];
+    }
+
     fn col(&self, col: usize) -> Vec<&f64> {
         assert!(self.len_col() > col);
         let cols = self.el.iter().map(|row| row.get(col).unwrap()).collect();
@@ -74,7 +80,7 @@ impl __Matrix<f64> for Matrix<f64> {
             }
         }
     }
-    fn sum(&mut self, with: Self) {
+    fn sum(&mut self, with: &Self) {
         assert!(self.len_col() == with.len_col());
         assert!(self.len_row() == with.len_row());
 
@@ -85,7 +91,7 @@ impl __Matrix<f64> for Matrix<f64> {
         }
     }
 
-    fn dot(&mut self, mat_a: Self, mat_b: Self) {
+    fn dot(&mut self, mat_a: &Self, mat_b: &Self) {
         assert!(mat_a.len_col() == mat_b.len_row());
         assert!(self.len_row() == mat_a.len_row());
         assert!(self.len_col() == mat_b.len_col());
@@ -128,7 +134,7 @@ fn matrix_test_sum() {
     mat_a.fill(5.0);
     let mut mat_b = Matrix::new(3, 3);
     mat_b.fill(5.0);
-    mat_a.sum(mat_b);
+    mat_a.sum(&mat_b);
     println!("{:?}", mat_a);
 }
 
@@ -139,7 +145,7 @@ fn matrix_test_dot() {
     mat_a.fill(5.0);
     let mut mat_b = Matrix::new(3, 4);
     mat_b.fill(2.0);
-    result.dot(mat_a, mat_b);
+    result.dot(&mat_a, &mat_b);
     println!("{:?}", result);
 }
 

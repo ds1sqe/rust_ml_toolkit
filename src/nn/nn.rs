@@ -74,4 +74,38 @@ impl NN {
         }
         diff
     }
+
+    fn learn(&mut self, inputs:&Vec<&[f64]>, expects: &Vec<&[f64]>,epsilon:&f64,rate:&f64) {
+        
+        let cost_original = self.diff(inputs, expects);
+
+        let mut delta = Self::new(self.apps.iter().fold(Vec::new(),|mut layers,apps| {layers.push(apps.len_col()); layers}).as_slice());
+
+        for level in 0..self.len() {
+            for row in 0..self.weights[level].len_row() {
+                for col in 0..self.weights[level].len_col() {
+                    let saved = self.weights[level].at(row, col);
+                    *self.weights[level].at_mut(row, col) += *epsilon;
+                    let cost_renewed = self.diff(inputs, expects);
+                    *delta.weights[level].at_mut(row,col) = (cost_renewed -cost_original) * rate;
+                    *self.weights[level].at_mut(row, col) = saved;
+                }
+            }
+
+        for col in 0..self.biases[level].len_col() {
+                    let saved = self.biases[level].at(0, col);
+                    *self.biases[level].at_mut(0, col) += *epsilon;
+                    let cost_renewed = self.diff(inputs, expects);
+                    *delta.biases[level].at_mut(0,col) = (cost_renewed -cost_original) * rate;
+                    *self.biases[level].at_mut(0, col) = saved;
+                }
+
+        }
+
+        for level in 0..self.len() {
+            self.weights[level].sum(&delta.weights[level]);
+            self.biases[level].sum(&delta.biases[level]);
+        }
+
+    }
 }

@@ -1,14 +1,15 @@
 use crate::matrix::matrix::Matrix;
 use crate::matrix::matrix::__Matrix;
 
-struct NN {
+#[derive(Debug)]
+pub struct NN {
     weights: Vec<Matrix<f64>>,
     biases: Vec<Matrix<f64>>,
     apps: Vec<Matrix<f64>>,
 }
 
 impl NN {
-    fn new(layers: &[usize]) -> Self {
+    pub fn new(layers: &[usize]) -> Self {
         let depth = layers.len();
 
         let mut weights = Vec::with_capacity(depth - 1);
@@ -17,11 +18,11 @@ impl NN {
 
         for (level, size) in layers.iter().enumerate() {
             if level == 0 {
-                apps[0] = Matrix::new(1, *size);
+                apps.push(Matrix::new(1, *size));
             } else {
-                weights[level] = Matrix::new(apps[level - 1].len_col(), *size);
-                biases[level - 1] = Matrix::new(1, *size);
-                apps[level - 1] = Matrix::new(1, *size);
+                weights.push(Matrix::new(apps[level - 1].len_col(), *size));
+                biases.push(Matrix::new(1, *size));
+                apps.push(Matrix::new(1, *size));
             }
         }
 
@@ -32,7 +33,7 @@ impl NN {
         };
     }
 
-    fn len(&self) -> usize {
+    pub fn len(&self) -> usize {
         self.weights.len()
     }
 
@@ -65,18 +66,19 @@ impl NN {
         diff
     }
 
-    fn diff(&mut self,inputs:&Vec<&[f64]>, expects: &Vec<&[f64]>) -> f64 {
+    fn diff(&mut self,inputs:&Vec<Vec<f64>>, expects: &Vec<Vec<f64>>) -> f64 {
         assert!(inputs.len()==expects.len());
         let mut diff = 0.0;
         for round in 0..inputs.len() {
-            self.set(inputs[round]);
-            diff += self.__diff(expects[round])
+            self.set(inputs[round].as_slice());
+            self.process();
+            diff += self.__diff(expects[round].as_slice())
         }
         diff
     }
 
-    fn learn(&mut self, inputs:&Vec<&[f64]>, expects: &Vec<&[f64]>,epsilon:&f64,rate:&f64) {
-        
+    fn finite_diff(&mut self, inputs:&Vec<Vec<f64>>, expects: &Vec<Vec<f64>>,epsilon:&f64) -> Self {
+
         let cost_original = self.diff(inputs, expects);
 
         let mut delta = Self::new(self.apps.iter().fold(Vec::new(),|mut layers,apps| {layers.push(apps.len_col()); layers}).as_slice());
@@ -87,7 +89,7 @@ impl NN {
                     let saved = self.weights[level].at(row, col);
                     *self.weights[level].at_mut(row, col) += *epsilon;
                     let cost_renewed = self.diff(inputs, expects);
-                    *delta.weights[level].at_mut(row,col) = (cost_renewed -cost_original) * rate;
+                    *delta.weights[level].at_mut(row,col) = (cost_renewed -cost_original)/epsilon ;
                     *self.weights[level].at_mut(row, col) = saved;
                 }
             }
@@ -96,16 +98,33 @@ impl NN {
                     let saved = self.biases[level].at(0, col);
                     *self.biases[level].at_mut(0, col) += *epsilon;
                     let cost_renewed = self.diff(inputs, expects);
-                    *delta.biases[level].at_mut(0,col) = (cost_renewed -cost_original) * rate;
+                    *delta.biases[level].at_mut(0,col) = (cost_renewed -cost_original) /epsilon;
                     *self.biases[level].at_mut(0, col) = saved;
                 }
 
         }
 
+        delta
+
+    }
+    pub fn rand(&mut self) {
         for level in 0..self.len() {
-            self.weights[level].sum(&delta.weights[level]);
-            self.biases[level].sum(&delta.biases[level]);
+            self.weights[level].rand();
+            self.biases[level].rand();
+        }        
+    }
+
+    pub fn learn(&mut self, inputs:&Vec<Vec<f64>>, expects: &Vec<Vec<f64>>,epsilon:&f64,rate:&f64) {
+        
+        let mut delta = self.finite_diff(inputs, expects, epsilon);
+        
+        for level in 0..self.len() {
+            delta.weights[level].mul(rate);
+            self.weights[level].sub(&delta.weights[level]);
+            delta.biases[level].mul(rate);
+            self.biases[level].sub(&delta.biases[level]);
         }
 
     }
+
 }

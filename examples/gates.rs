@@ -1,6 +1,8 @@
 use ml_in_rust::nn::nn;
 
 fn main() {
+    // using finite_diff
+
     let inputs = vec![
         vec![0.0, 0.0],
         vec![0.0, 1.0],
@@ -25,7 +27,10 @@ fn main() {
     }
 
     for idx in 0..1000000 {
-        nt.learn(&inputs, &outputs, &eps, &rate);
+        let mut delta = nt.finite_diff(&inputs, &outputs, &eps);
+        delta.mul(&rate);
+
+        nt.learn(&delta);
         if idx % 1000 == 0 {
             println!("{}@cost: {}", idx, nt.cost(&inputs, &outputs));
         }

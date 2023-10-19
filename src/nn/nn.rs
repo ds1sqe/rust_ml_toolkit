@@ -57,6 +57,11 @@ impl NN {
         self.apps[self.len()].row(0)
     }
 
+    pub fn output_mut(&mut self) -> &mut [f64] {
+        let len = self.len();
+        self.apps[len].row_mut(0)
+    }
+
     fn __cost(&self, expect: &[f64]) -> f64 {
         assert!(self.output().len() == expect.len());
         let mut diff = 0.0;
@@ -68,13 +73,64 @@ impl NN {
 
     pub fn cost(&mut self, inputs: &Vec<Vec<f64>>, expects: &Vec<Vec<f64>>) -> f64 {
         assert!(inputs.len() == expects.len());
+        let n = inputs.len() as f64;
         let mut diff = 0.0;
         for round in 0..inputs.len() {
             self.set(inputs[round].as_slice());
             self.process();
             diff += self.__cost(expects[round].as_slice())
         }
-        diff
+        diff / n
+    }
+
+    pub fn backprop(&mut self, inputs: &Vec<Vec<f64>>, expects: &Vec<Vec<f64>>) -> Self {
+        let n = inputs.len();
+        let mut delta = Self::new(
+            self.apps
+                .iter()
+                .fold(Vec::new(), |mut layers, apps| {
+                    layers.push(apps.len_col());
+                    layers
+                })
+                .as_slice(),
+        );
+
+        for (round, input) in inputs.iter().enumerate() {
+            self.set(input.as_slice());
+            self.process();
+
+            for level in 0..delta.len() {
+                delta.apps[level].fill(0.0);
+            }
+
+            for oidx in 0..self.output().len() {
+                delta.output_mut()[oidx] = self.output()[oidx] - expects[round][oidx];
+            }
+
+            for level in (1..=self.len()).rev() {
+                for aidx in 0..self.apps[level].len_col() {
+                    let a = self.apps[level].at(0, aidx);
+                    let da = delta.apps[level].at(0, aidx);
+                    *delta.biases[level - 1].at_mut(0, aidx) += 2.0 * da * a * (1.0 - a);
+
+                    for paidx in 0..self.apps[level - 1].len_col() {
+                        let pa = self.apps[level - 1].at(0, paidx);
+                        let w = self.weights[level - 1].at(paidx, aidx);
+                        *delta.weights[level - 1].at_mut(paidx, aidx) +=
+                            2.0 * da * a * (1.0 - a) * pa;
+                        *delta.apps[level - 1].at_mut(0, paidx) += 2.0 * da * a * (1.0 - a) * w;
+                    }
+                }
+            }
+        }
+
+        for level in 0..delta.len() {
+            let n = n as f64;
+            delta.weights[level].div(&n);
+            delta.biases[level].div(&n);
+        }
+
+        delta
     }
 
     pub fn finite_diff(
@@ -118,6 +174,14 @@ impl NN {
 
         delta
     }
+
+    pub fn mul(&mut self, rate: &f64) {
+        for level in 0..self.len() {
+            self.weights[level].mul(rate);
+            self.biases[level].mul(rate);
+        }
+    }
+
     pub fn rand(&mut self) {
         for level in 0..self.len() {
             self.weights[level].rand();
@@ -125,19 +189,9 @@ impl NN {
         }
     }
 
-    pub fn learn(
-        &mut self,
-        inputs: &Vec<Vec<f64>>,
-        expects: &Vec<Vec<f64>>,
-        epsilon: &f64,
-        rate: &f64,
-    ) {
-        let mut delta = self.finite_diff(inputs, expects, epsilon);
-
+    pub fn learn(&mut self, delta: &Self) {
         for level in 0..self.len() {
-            delta.weights[level].mul(rate);
             self.weights[level].sub(&delta.weights[level]);
-            delta.biases[level].mul(rate);
             self.biases[level].sub(&delta.biases[level]);
         }
     }

@@ -19,6 +19,7 @@ pub trait __Matrix<T> {
     fn sum(&mut self, with: &Self);
     fn sub(&mut self, with: &Self);
     fn mul(&mut self, with: &f64);
+    fn div(&mut self, with: &f64);
     fn dot(&mut self, mat_a: &Self, mat_b: &Self);
     fn sigmoid(&mut self);
 }
@@ -92,7 +93,7 @@ impl __Matrix<f64> for Matrix<f64> {
             }
         }
     }
-    
+
     fn sub(&mut self, with: &Self) {
         assert!(self.len_col() == with.len_col());
         assert!(self.len_row() == with.len_row());
@@ -105,10 +106,17 @@ impl __Matrix<f64> for Matrix<f64> {
     }
 
     fn mul(&mut self, with: &f64) {
-
         for (ridx, row) in self.el.iter_mut().enumerate() {
             for (cidx, col) in row.iter_mut().enumerate() {
                 *col = *col * with;
+            }
+        }
+    }
+
+    fn div(&mut self, with: &f64) {
+        for (ridx, row) in self.el.iter_mut().enumerate() {
+            for (cidx, col) in row.iter_mut().enumerate() {
+                *col = *col / with;
             }
         }
     }

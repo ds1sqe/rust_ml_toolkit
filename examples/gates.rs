@@ -1,27 +1,42 @@
 use ml_in_rust::nn::nn;
 
-
 fn main() {
-    let inputs = vec![vec![0.0,0.0],vec![0.0,1.0],vec![1.0,0.0],vec![1.0,1.0]];
-    let outputs = vec![vec![1.0],vec![0.0],vec![0.0],vec![1.0]];
-    let layers = [2,4,4,1];
+    let inputs = vec![
+        vec![0.0, 0.0],
+        vec![0.0, 1.0],
+        vec![1.0, 0.0],
+        vec![1.0, 1.0],
+    ];
+    let outputs = vec![vec![1.0], vec![0.0], vec![0.0], vec![1.0]];
+    let layers = [2, 4, 4, 1];
 
     let eps = 1e-4;
-    let rate = 1e-3;
+    let rate = 1e-2;
     let mut nt = nn::NN::new(&layers);
 
-
-    println!("{:?}",nt);
     nt.rand();
-    println!("{:?}",nt);
+    println!("{:?}", nt);
 
-    nt.learn(&inputs, &outputs, &eps, &rate);
-
-    println!("{:?}",nt);
-
-    for idx in 0..1000 {
-    nt.learn(&inputs, &outputs, &eps, &rate);
+    for input in inputs.clone() {
+        println!("input : {:?}", input);
+        nt.set(input.as_slice());
+        nt.process();
+        println!("output : {:?}", nt.output());
     }
 
-    println!("{:?}",nt);
+    for idx in 0..1000000 {
+        nt.learn(&inputs, &outputs, &eps, &rate);
+        if idx % 1000 == 0 {
+            println!("{}@cost: {}", idx, nt.cost(&inputs, &outputs));
+        }
+    }
+
+    for input in inputs {
+        println!("input : {:?}", input);
+        nt.set(input.as_slice());
+        nt.process();
+        println!("output : {:?}", nt.output());
+    }
+
+    println!("{:?}", nt);
 }

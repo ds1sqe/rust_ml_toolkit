@@ -3,9 +3,10 @@ use crate::core::matrix::matrix::__Matrix;
 
 #[derive(Debug)]
 pub struct NN {
-    weights: Vec<Matrix<f64>>,
-    biases: Vec<Matrix<f64>>,
-    apps: Vec<Matrix<f64>>,
+    pub layers: Vec<usize>,
+    pub weights: Vec<Matrix<f64>>,
+    pub biases: Vec<Matrix<f64>>,
+    pub apps: Vec<Matrix<f64>>,
 }
 
 impl NN {
@@ -27,6 +28,7 @@ impl NN {
         }
 
         return NN {
+            layers: layers.to_vec(),
             weights,
             biases,
             apps,
@@ -201,6 +203,17 @@ impl NN {
         for level in 0..self.len() {
             self.weights[level].sub(&delta.weights[level]);
             self.biases[level].sub(&delta.biases[level]);
+        }
+    }
+}
+
+impl Clone for NN {
+    fn clone(&self) -> Self {
+        Self {
+            layers: self.layers.clone(),
+            weights: self.weights.clone(),
+            biases: self.biases.clone(),
+            apps: self.apps.clone(),
         }
     }
 }

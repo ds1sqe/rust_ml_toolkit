@@ -1,3 +1,2 @@
-pub mod matrix;
-pub mod nn;
-pub mod common;
+pub mod core;
+pub mod visualizer;

@@ -1,4 +1,4 @@
-use crate::common::sigmoid;
+use super::super::common::sigmoid;
 
 #[derive(Debug)]
 pub struct Matrix<T> {

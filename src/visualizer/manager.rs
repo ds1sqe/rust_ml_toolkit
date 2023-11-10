@@ -1,4 +1,4 @@
-use super::frame::window_frame;
+use super::{frame::window_frame, visualize::draw};
 use eframe::{egui, NativeOptions};
 
 #[derive(Default)]
@@ -12,6 +12,7 @@ impl eframe::App for Manager {
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         window_frame(ctx, frame, "Rust ML Manager", |ui| {
             ui.label("Content");
+            draw(ui);
         });
     }
 }

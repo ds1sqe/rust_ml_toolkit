@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 eframe = "0.23.0"
+egui_plot = "0.23.0"
 env_logger = "0.10.0"
 rand = "0.8.5"
 serde = "1.0.192"

@@ -1,8 +1,11 @@
 use super::super::common::sigmoid;
 
-#[derive(Debug)]
+use serde::Deserialize;
+use serde::Serialize;
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Matrix<T> {
-    el: Box<Vec<Vec<T>>>,
+    pub el: Box<Vec<Vec<T>>>,
 }
 
 pub trait __Matrix<T> {

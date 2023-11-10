@@ -1,4 +1,4 @@
-use ml_in_rust::nn::nn;
+use ml_in_rust::core::nn;
 
 fn main() {
     let inputs = vec![

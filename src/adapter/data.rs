@@ -1,6 +1,10 @@
-use std::{fs::File, path::Path};
+use std::{
+    fs::File,
+    io::{Read, Write},
+    path::Path,
+};
 
-use crate::core::{matrix::matrix::Matrix, nn::nn::NN};
+use crate::core::nn::nn::NN;
 
 pub trait Stringfiable {
     type Struct;
@@ -9,7 +13,7 @@ pub trait Stringfiable {
 
 pub trait Buildable {
     type Struct;
-    fn build(str: String) -> Self::Struct;
+    fn build(str: String) -> Option<Self::Struct>;
 }
 
 pub trait Readable {
@@ -18,74 +22,48 @@ pub trait Readable {
 }
 pub trait Savable {
     type Struct;
-    fn save(data: Self::Struct, path: &Path) -> bool;
-}
-
-impl Stringfiable for Matrix<f64> {
-    type Struct = Matrix<f64>;
-
-    fn stringfy(src: &Self::Struct) -> Option<String> {
-        todo!()
-    }
+    fn save(data: &Self::Struct, path: &Path) -> Option<bool>;
 }
 
 impl Stringfiable for NN {
     type Struct = NN;
     fn stringfy(src: &Self::Struct) -> Option<String> {
-        let mut result = String::new();
-        let cloned = src.clone();
-
-        result.push_str("[Layers]\n");
-        for (level, layer_info) in cloned.layers.iter().enumerate() {
-            result.push_str(&layer_info.to_string());
-            if level < cloned.layers.len() - 1 {
-                result.push(',')
-            }
+        let output = serde_json::to_string_pretty(&src);
+        if output.is_ok() {
+            return Some(output.unwrap());
         }
-        result.push_str("\n[Weights]\n");
-        for (level, weight_info) in cloned.weights.iter().enumerate() {
-            result.push_str(&Matrix::<f64>::stringfy(&weight_info).unwrap());
-            if level < cloned.weights.len() - 1 {
-                result.push(',')
-            }
-        }
-        result.push_str("\n[Biases]\n");
-        for (level, biase_info) in cloned.biases.iter().enumerate() {
-            result.push_str(&Matrix::<f64>::stringfy(&biase_info).unwrap());
-            if level < cloned.biases.len() - 1 {
-                result.push(',')
-            }
-        }
-        result.push_str("\n[Apps]\n");
-        for (level, app_info) in cloned.apps.iter().enumerate() {
-            result.push_str(&Matrix::<f64>::stringfy(&app_info).unwrap());
-            if level < cloned.apps.len() - 1 {
-                result.push(',')
-            }
-        }
-
-        Some(result)
+        None
     }
 }
 
 impl Buildable for NN {
     type Struct = NN;
-    fn build(str: String) -> Self::Struct {
+    fn build(str: String) -> Option<Self::Struct> {
         let cloned = str.clone();
-        let idx_layer_start = cloned.find("[Layers]");
-        let idx_weights_start = cloned.find("[Weights]");
-
-        let idx_biases_start = cloned.find("[Biases]");
-        let idx_apps_start = cloned.find("[Apps]");
-
-        todo!()
+        let nn = serde_json::from_str(&cloned);
+        if nn.is_ok() {
+            return nn.unwrap();
+        }
+        None
     }
 }
 
 impl Savable for NN {
     type Struct = NN;
-    fn save(data: Self::Struct, path: &Path) -> bool {
-        todo!()
+    fn save(data: &Self::Struct, path: &Path) -> Option<bool> {
+        let mut file = match File::create(path) {
+            Err(e) => panic!("could not create at {}: {}", path.display(), e),
+            Ok(file) => file,
+        };
+        let str = NN::stringfy(data);
+        if str.is_none() {
+            return None;
+        }
+        let flag = file.write_all(str.unwrap().as_bytes()).is_ok();
+        if flag {
+            return Some(true);
+        }
+        return None;
     }
 }
 
@@ -93,10 +71,66 @@ impl Readable for NN {
     type Struct = NN;
 
     fn read(path: &Path) -> Option<Self::Struct> {
-        let mut data = match File::open(path) {
+        let mut file = match File::open(path) {
             Err(e) => panic!("could not open {}: {}", path.display(), e),
             Ok(file) => file,
         };
-        todo!()
+        let mut buf = String::new();
+        let flag = file.read_to_string(&mut buf);
+        if flag.is_err() {
+            return None;
+        }
+
+        let nn = NN::build(buf.to_string());
+        if nn.is_none() {
+            return None;
+        }
+        nn
     }
+}
+
+#[test]
+fn test_data_save_and_read() {
+    let layers = [2, 4, 4, 1];
+    let mut orgin = NN::new(&layers);
+
+    const PRSIZE: f64 = 1_000_000_000.0;
+
+    let path = Path::new("nn.json");
+
+    orgin.rand();
+
+    println!("Origianl NN:\n{:?}", orgin);
+
+    NN::save(&orgin, path);
+
+    let saved = NN::read(path).unwrap();
+
+    println!("Saved NN:\n{:?}", saved);
+
+    for (idx, l) in orgin.layers.iter().enumerate() {
+        assert!(saved.layers[idx] == *l)
+    }
+    for (idx, matrix) in orgin.weights.iter().enumerate() {
+        for (widx, weight) in matrix.el.iter().enumerate() {
+            for (wwidx, val) in weight.iter().enumerate() {
+                assert!(
+                    (f64::trunc(saved.weights[idx].el[widx][wwidx] * PRSIZE) / PRSIZE)
+                        == (f64::trunc(*val * PRSIZE) / PRSIZE)
+                )
+            }
+        }
+    }
+    for (idx, matrix) in orgin.biases.iter().enumerate() {
+        for (bidx, biase) in matrix.el.iter().enumerate() {
+            for (bbidx, val) in biase.iter().enumerate() {
+                assert!(
+                    (f64::trunc(saved.biases[idx].el[bidx][bbidx] * PRSIZE) / PRSIZE)
+                        == (f64::trunc(*val * PRSIZE) / PRSIZE)
+                )
+            }
+        }
+    }
+
+    std::fs::remove_file(path).unwrap();
 }

@@ -8,6 +8,8 @@ pub struct NN {
     apps: Vec<Matrix<f64>>,
 }
 
+// TODO: change input&output argument's type to Matrix
+
 impl NN {
     pub fn new(layers: &[usize]) -> Self {
         let depth = layers.len();

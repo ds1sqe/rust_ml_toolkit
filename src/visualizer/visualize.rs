@@ -29,6 +29,11 @@ fn visualize(plot_ui: &mut PlotUi, nn: Nodes) {
     let width = nn.layers.len();
     let height = nn.layers.iter().max().unwrap();
 
+    // let hot;
+    // let cold;
+    // let hi;
+    // let low;
+
     for (level, connections) in nn.connections.iter().enumerate() {
         for (node_idx, node_connections) in connections.iter().enumerate() {
             for con in node_connections.iter() {
@@ -36,14 +41,20 @@ fn visualize(plot_ui: &mut PlotUi, nn: Nodes) {
                 let pos_src_y = con.src as f64 * 2.0;
                 let pos_dst_x = con.dst_level as f64 * 10.0;
                 let pos_dst_y = con.dst as f64 * 2.0;
-                plot_ui.line(Line::new(PlotPoints::from_explicit_callback(
-                    move |x| {
-                        (pos_dst_y - pos_src_y) * (x - pos_src_x) / (pos_dst_x - pos_src_x)
-                            + pos_src_y
-                    },
-                    pos_src_x..pos_dst_x,
-                    256,
-                )))
+                plot_ui.line(
+                    Line::new(PlotPoints::from_explicit_callback(
+                        move |x| {
+                            (pos_dst_y - pos_src_y) * (x - pos_src_x) / (pos_dst_x - pos_src_x)
+                                + pos_src_y
+                        },
+                        (pos_src_x + 0.1)..(pos_dst_x - 0.1),
+                        256,
+                    ))
+                    .name(format!(
+                        "{}:{}->{}:{}\nweight:{}",
+                        con.src_level, con.src, con.dst_level, con.dst, con.weight
+                    )),
+                )
             }
         }
     }

@@ -75,7 +75,7 @@ impl __Matrix<f64> for Matrix<f64> {
     fn rand(&mut self) {
         for row in self.el.iter_mut() {
             for col in row.iter_mut() {
-                *col = rand::random();
+                *col = rand::random::<f64>() * 2.0 - 1.0;
             }
         }
     }

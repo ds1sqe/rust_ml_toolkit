@@ -1,3 +1,5 @@
+use std::thread;
+
 use eframe::{
     egui,
     egui::{Frame, Response, Sense, Ui},
@@ -5,20 +7,55 @@ use eframe::{
     epaint::Vec2,
     epaint::{self, Color32, Stroke},
 };
-use egui_plot::{self, Line, Plot, PlotPoint, PlotPoints, PlotResponse, PlotUi, Points};
+use egui_plot::{
+    self, Line, Plot, PlotPoint, PlotPoints, PlotResponse, PlotUi, Points,
+};
 
-use crate::{adapter::nodes::Nodes, core::nn::nn::NN};
+use crate::{
+    adapter::nodes::{Node, Nodes, Nodetype},
+    core::nn::nn::NN,
+};
+
+use super::gradient::{Color, Gradient};
 
 //use std::f64::consts::TAU;
 
-fn circle(pos: PlotPoint) -> Points {
+fn create_node(pos: PlotPoint, node: &Node) -> Points {
+    let label = match node {
+        Node {
+            nodetype: Nodetype::Input,
+            level,
+            bias,
+            value,
+        } => format!("Type:Input\nValue:{}", value),
+        Node {
+            nodetype: Nodetype::Middle,
+            level,
+            bias,
+            value,
+        } => format!(
+            "Type:Middle\nLevel:{}\nBias:{}\nValue:{}",
+            level, bias, value
+        ),
+        Node {
+            nodetype: Nodetype::Output,
+            level,
+            bias,
+            value,
+        } => format!("Type:Output\nBias:{}\nValue:{}", bias, value),
+    };
+
     let radius = 10.0;
+
+    let grad = Gradient::default(1.0, -1.0);
+    let Color { r, g, b } = grad.get_color(node.bias as f32);
+
     let points = Points::new(vec![[pos.x, pos.y]])
         .filled(true)
         .shape(egui_plot::MarkerShape::Circle)
         .radius(radius)
-        .color(Color32::from_rgb(100, 200, 100))
-        .name("circle");
+        .color(Color32::from_rgb(r, g, b))
+        .name(label);
 
     points
 }
@@ -41,15 +78,21 @@ fn visualize(plot_ui: &mut PlotUi, nn: Nodes) {
                 let pos_src_y = con.src as f64 * 2.0;
                 let pos_dst_x = con.dst_level as f64 * 10.0;
                 let pos_dst_y = con.dst as f64 * 2.0;
+
+                let grad = Gradient::default(1.0, -1.0);
+                let Color { r, g, b } = grad.get_color(con.weight as f32);
+
                 plot_ui.line(
                     Line::new(PlotPoints::from_explicit_callback(
                         move |x| {
-                            (pos_dst_y - pos_src_y) * (x - pos_src_x) / (pos_dst_x - pos_src_x)
+                            (pos_dst_y - pos_src_y) * (x - pos_src_x)
+                                / (pos_dst_x - pos_src_x)
                                 + pos_src_y
                         },
-                        (pos_src_x + 0.1)..(pos_dst_x - 0.1),
+                        (pos_src_x + 0.2)..(pos_dst_x - 0.2),
                         256,
                     ))
+                    .color(Color32::from_rgb(r, g, b))
                     .name(format!(
                         "{}:{}->{}:{}\nweight:{}",
                         con.src_level, con.src, con.dst_level, con.dst, con.weight
@@ -63,7 +106,7 @@ fn visualize(plot_ui: &mut PlotUi, nn: Nodes) {
         let pos_x = level as f64 * 10.0;
         for (nidx, node) in nodes.iter().enumerate() {
             let pos_y = nidx as f64 * 2.0;
-            plot_ui.points(circle(PlotPoint::new(pos_x, pos_y)))
+            plot_ui.points(create_node(PlotPoint::new(pos_x, pos_y), node))
         }
     }
 }
@@ -72,12 +115,21 @@ pub fn draw(ui: &mut Ui) -> Response {
     let plot = Plot::new("network").height(600.0).data_aspect(1.0);
 
     let layers = [4, 8, 8, 8, 4];
-    let orgin = NN::new(&layers);
+    let mut orgin = NN::new(&layers);
+    orgin.rand();
     let nodes = Nodes::from(&orgin);
 
     let PlotResponse {
         response,
-        inner: (screen_pos, pointer_coordinate, pointer_coordinate_drag_delta, bounds, hovered, lll),
+        inner:
+            (
+                screen_pos,
+                pointer_coordinate,
+                pointer_coordinate_drag_delta,
+                bounds,
+                hovered,
+                lll,
+            ),
         ..
     } = plot.show(ui, |plot_ui| {
         (

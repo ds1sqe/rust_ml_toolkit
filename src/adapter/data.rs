@@ -6,6 +6,8 @@ use std::{
 
 use crate::core::nn::nn::NN;
 
+// TODO: rename this file
+
 pub trait Stringfiable {
     type Struct;
     fn stringfy(src: &Self::Struct) -> Option<String>;
@@ -115,7 +117,8 @@ fn test_data_save_and_read() {
         for (widx, weight) in matrix.el.iter().enumerate() {
             for (wwidx, val) in weight.iter().enumerate() {
                 assert!(
-                    (f64::trunc(saved.weights[idx].el[widx][wwidx] * PRSIZE) / PRSIZE)
+                    (f64::trunc(saved.weights[idx].el[widx][wwidx] * PRSIZE)
+                        / PRSIZE)
                         == (f64::trunc(*val * PRSIZE) / PRSIZE)
                 )
             }
@@ -125,7 +128,8 @@ fn test_data_save_and_read() {
         for (bidx, biase) in matrix.el.iter().enumerate() {
             for (bbidx, val) in biase.iter().enumerate() {
                 assert!(
-                    (f64::trunc(saved.biases[idx].el[bidx][bbidx] * PRSIZE) / PRSIZE)
+                    (f64::trunc(saved.biases[idx].el[bidx][bbidx] * PRSIZE)
+                        / PRSIZE)
                         == (f64::trunc(*val * PRSIZE) / PRSIZE)
                 )
             }

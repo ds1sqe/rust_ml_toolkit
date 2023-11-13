@@ -1,4 +1,4 @@
-use super::{frame::window_frame, visualize::draw};
+use super::{ui::frame::window_frame, ui::visualize::draw};
 use eframe::{egui, NativeOptions};
 
 #[derive(Default)]

@@ -12,8 +12,6 @@ pub struct NN {
     pub apps: Vec<Matrix<f64>>,
 }
 
-// TODO: change input&output argument's type to Matrix
-
 impl NN {
     pub fn new(layers: &[usize]) -> Self {
         let depth = layers.len();
@@ -90,7 +88,11 @@ impl NN {
         diff / n
     }
 
-    pub fn backprop(&mut self, inputs: &Vec<Vec<f64>>, expects: &Vec<Vec<f64>>) -> Self {
+    pub fn backprop(
+        &mut self,
+        inputs: &Vec<Vec<f64>>,
+        expects: &Vec<Vec<f64>>,
+    ) -> Self {
         let n = inputs.len();
         let mut delta = Self::new(
             self.apps
@@ -111,21 +113,24 @@ impl NN {
             }
 
             for oidx in 0..self.output().len() {
-                delta.output_mut()[oidx] = self.output()[oidx] - expects[round][oidx];
+                delta.output_mut()[oidx] =
+                    self.output()[oidx] - expects[round][oidx];
             }
 
             for level in (1..=self.len()).rev() {
                 for aidx in 0..self.apps[level].len_col() {
                     let a = self.apps[level].at(0, aidx);
                     let da = delta.apps[level].at(0, aidx);
-                    *delta.biases[level - 1].at_mut(0, aidx) += 2.0 * da * a * (1.0 - a);
+                    *delta.biases[level - 1].at_mut(0, aidx) +=
+                        2.0 * da * a * (1.0 - a);
 
                     for paidx in 0..self.apps[level - 1].len_col() {
                         let pa = self.apps[level - 1].at(0, paidx);
                         let w = self.weights[level - 1].at(paidx, aidx);
                         *delta.weights[level - 1].at_mut(paidx, aidx) +=
                             2.0 * da * a * (1.0 - a) * pa;
-                        *delta.apps[level - 1].at_mut(0, paidx) += 2.0 * da * a * (1.0 - a) * w;
+                        *delta.apps[level - 1].at_mut(0, paidx) +=
+                            2.0 * da * a * (1.0 - a) * w;
                     }
                 }
             }
@@ -174,7 +179,8 @@ impl NN {
                 let saved = self.biases[level].at(0, col);
                 *self.biases[level].at_mut(0, col) += *epsilon;
                 let cost_renewed = self.cost(inputs, expects);
-                *delta.biases[level].at_mut(0, col) = (cost_renewed - cost_original) / epsilon;
+                *delta.biases[level].at_mut(0, col) =
+                    (cost_renewed - cost_original) / epsilon;
                 *self.biases[level].at_mut(0, col) = saved;
             }
         }

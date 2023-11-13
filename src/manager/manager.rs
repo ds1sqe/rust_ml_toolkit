@@ -1,8 +1,18 @@
+use crate::{
+    adapter::{
+        context::{self, Context, State},
+        session::Session,
+    },
+    core::nn::{dataset::DataSet, nn::NN},
+};
+
 use super::{ui::frame::window_frame, ui::visualize::draw};
 use eframe::{egui, NativeOptions};
 
 #[derive(Default)]
-pub struct Manager {}
+pub struct Manager {
+    context: Context,
+}
 
 impl eframe::App for Manager {
     fn clear_color(&self, _visuals: &egui::Visuals) -> [f32; 4] {
@@ -10,10 +20,46 @@ impl eframe::App for Manager {
     }
 
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
-        window_frame(ctx, frame, "Rust ML Manager", |ui| {
-            ui.label("Content");
-            draw(ui);
-        });
+        window_frame(
+            ctx,
+            frame,
+            "Rust ML Manager",
+            &mut self.context,
+            |ui, context| {
+                ui.label("Content");
+                draw(ui, context);
+                ui.label(format!("{:?}", context.state));
+                if ui.button("load").clicked() {
+                    if context.state == State::Empty {
+                        let layers = [4, 8, 8, 8, 4];
+                        let mut orgin = NN::new(&layers);
+                        orgin.rand();
+                        context.session = Some(Session {
+                            model: orgin,
+                            dataset: DataSet {
+                                inputs: vec![vec![]],
+                                outputs: vec![vec![]],
+                            },
+                            option: crate::adapter::session::SessionOption {
+                                train_method:
+                                    crate::adapter::session::TrainingMethod::BackProp,
+                                post_x: crate::adapter::session::PostX::Sigmoid,
+                            },
+                        });
+                        context.state = State::Ready;
+                    }
+                }
+                if ui.button("drop").clicked() {
+                    context.session = None;
+                    context.state = State::Empty;
+                }
+                if ui.button("rand").clicked() {
+                    if context.state != State::Empty {
+                        context.session.as_mut().unwrap().model.rand();
+                    }
+                }
+            },
+        );
     }
 }
 

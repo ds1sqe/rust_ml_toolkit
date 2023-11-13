@@ -3,18 +3,28 @@ use crate::core::nn::{dataset::DataSet, nn::NN};
 
 use super::session::Session;
 
-enum State {
+#[derive(PartialEq, Debug)]
+pub enum State {
     Empty,
     Loading,
     Ready,
     Running,
 }
 
-struct Context {
+pub struct Context {
     /// session data contains model, dataset, options
-    session: Option<Session>,
+    pub session: Option<Session>,
     /// state of nn,
-    state: State,
+    pub state: State,
+}
+
+impl Default for Context {
+    fn default() -> Self {
+        Self {
+            session: None,
+            state: State::Empty,
+        }
+    }
 }
 
 impl Context {

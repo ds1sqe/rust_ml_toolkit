@@ -1,26 +1,26 @@
 #![allow(unused)]
 use crate::core::nn::{dataset::DataSet, nn::NN};
 
-enum TrainingMethod {
+pub enum TrainingMethod {
     FiniteDiff { rate: f64, eps: f64 },
     BackProp,
 }
-enum PostX {
+pub enum PostX {
     Sigmoid,
 }
 
-struct SessionOption {
-    train_method: TrainingMethod,
-    post_x: PostX,
+pub struct SessionOption {
+    pub train_method: TrainingMethod,
+    pub post_x: PostX,
 }
 
 pub struct Session {
     /// neural network
-    model: NN,
+    pub model: NN,
     /// training data,
-    dataset: DataSet<f64>,
+    pub dataset: DataSet<f64>,
     /// option of session
-    option: SessionOption,
+    pub option: SessionOption,
 }
 
 impl Session {
@@ -40,6 +40,7 @@ impl Session {
 
         self.model.learn(&delta)
     }
+    /// train model n times
     pub fn train_ntimes(&mut self, n: usize) {
         for _ in 0..n {
             self.train();

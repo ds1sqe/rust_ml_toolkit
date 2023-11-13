@@ -1,10 +1,13 @@
 use eframe::egui;
 
+use crate::adapter::context::Context;
+
 pub fn window_frame(
     ctx: &egui::Context,
     frame: &mut eframe::Frame,
     title: &str,
-    add_contents: impl FnOnce(&mut egui::Ui),
+    context: &mut Context,
+    add_contents: impl FnOnce(&mut egui::Ui, &mut Context),
 ) {
     use egui::*;
 
@@ -34,7 +37,7 @@ pub fn window_frame(
         }
         .shrink(4.0);
         let mut content_ui = ui.child_ui(content_rect, *ui.layout());
-        add_contents(&mut content_ui);
+        add_contents(&mut content_ui, context);
     });
 }
 

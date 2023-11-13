@@ -12,7 +12,10 @@ use egui_plot::{
 };
 
 use crate::{
-    adapter::nodes::{Node, Nodes, Nodetype},
+    adapter::{
+        context::{Context, State},
+        nodes::{Node, Nodes, Nodetype},
+    },
     core::nn::nn::NN,
 };
 
@@ -63,8 +66,8 @@ fn create_node(pos: PlotPoint, node: &Node) -> Points {
 fn get_pos(start: usize, end: usize, distance: f64, idx: usize) {}
 
 fn visualize(plot_ui: &mut PlotUi, nn: Nodes) {
-    let width = nn.layers.len();
-    let height = nn.layers.iter().max().unwrap();
+    // let width = nn.layers.len();
+    // let height = nn.layers.iter().max().unwrap();
 
     // let hot;
     // let cold;
@@ -74,10 +77,13 @@ fn visualize(plot_ui: &mut PlotUi, nn: Nodes) {
     for (level, connections) in nn.connections.iter().enumerate() {
         for (node_idx, node_connections) in connections.iter().enumerate() {
             for con in node_connections.iter() {
+                let len_src = nn.layers[level];
+                let len_dst = nn.layers[level + 1];
+
                 let pos_src_x = con.src_level as f64 * 10.0;
-                let pos_src_y = con.src as f64 * 2.0;
+                let pos_src_y = con.src as f64 * 2.0 - (1.0 * (len_src - 1) as f64);
                 let pos_dst_x = con.dst_level as f64 * 10.0;
-                let pos_dst_y = con.dst as f64 * 2.0;
+                let pos_dst_y = con.dst as f64 * 2.0 - (1.0 * (len_dst - 1) as f64);
 
                 let grad = Gradient::default(1.0, -1.0);
                 let Color { r, g, b } = grad.get_color(con.weight as f32);
@@ -104,20 +110,24 @@ fn visualize(plot_ui: &mut PlotUi, nn: Nodes) {
 
     for (level, nodes) in nn.nodes.iter().enumerate() {
         let pos_x = level as f64 * 10.0;
+        let count = nodes.len();
         for (nidx, node) in nodes.iter().enumerate() {
-            let pos_y = nidx as f64 * 2.0;
+            let pos_y = nidx as f64 * 2.0 - (2.0 / 2.0 * (count - 1) as f64);
             plot_ui.points(create_node(PlotPoint::new(pos_x, pos_y), node))
         }
     }
 }
 
-pub fn draw(ui: &mut Ui) -> Response {
+pub fn draw(ui: &mut Ui, context: &mut Context) -> Option<Response> {
+    match context.state {
+        State::Empty => return None,
+        State::Loading => return None,
+        _ => (),
+    }
+
     let plot = Plot::new("network").height(600.0).data_aspect(1.0);
 
-    let layers = [4, 8, 8, 8, 4];
-    let mut orgin = NN::new(&layers);
-    orgin.rand();
-    let nodes = Nodes::from(&orgin);
+    let nodes = Nodes::from(&context.session.as_ref().unwrap().model);
 
     let PlotResponse {
         response,
@@ -165,5 +175,5 @@ pub fn draw(ui: &mut Ui) -> Response {
     );
     ui.label(format!("pointer coordinate drag delta: {coordinate_text}"));
 
-    response
+    Some(response)
 }

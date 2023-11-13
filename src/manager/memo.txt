@@ -1,0 +1,44 @@
+Runner Process <- DATA(A) -- Gui Process
+
+DATA(A) {
+    Control Signal
+    Initial State (Config)...
+    Context
+}
+
+Runner Process -- DATA(B) -> Gui Process
+
+DATA(B) {
+    Renewed Context ?
+    Costs Differences
+    Nodes View
+}
+
+
+Runner Process Logic
+
+1. Wait for signal (a microsec)
+1.1 if there was signal,
+    handle it.
+
+2. Train (b times)
+
+3.1.
+  Create Nodes View
+  Get Cost Diff
+3.2.
+  Clone Context
+4.
+  Send data.
+
+
+Gui Process Logic
+
+1. Wait for signal (c microsec)
+
+2. if get DATA(B), rerender with that data.
+
+<Refresh list>
+2.1 Nodes view.
+2.2 Gui Context (if provided)
+2.3 Plot of Costs

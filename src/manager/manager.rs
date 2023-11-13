@@ -70,10 +70,14 @@ impl eframe::App for Manager {
                 if ui.button("train").clicked() {
                     if context.state != State::Empty {
                         context.state = State::Running;
-                        context.session.as_mut().unwrap().train_ntimes(1_0000);
-                        context.nodes = Some(Nodes::from(
-                            &context.session.clone().unwrap().model,
-                        ));
+                        for i in 0..100000 {
+                            if i % 100 == 0 {
+                                context.nodes = Some(Nodes::from(
+                                    &context.session.clone().unwrap().model,
+                                ));
+                            }
+                            context.session.as_mut().unwrap().train();
+                        }
                         context.state = State::Ready;
                     }
                 }

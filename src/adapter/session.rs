@@ -1,19 +1,23 @@
 #![allow(unused)]
 use crate::core::nn::{dataset::DataSet, nn::NN};
 
+#[derive(Clone)]
 pub enum TrainingMethod {
     FiniteDiff { rate: f64, eps: f64 },
     BackProp,
 }
+#[derive(Clone)]
 pub enum PostX {
     Sigmoid,
 }
 
+#[derive(Clone)]
 pub struct SessionOption {
     pub train_method: TrainingMethod,
     pub post_x: PostX,
 }
 
+#[derive(Clone)]
 pub struct Session {
     /// neural network
     pub model: NN,
@@ -25,7 +29,7 @@ pub struct Session {
 
 impl Session {
     /// train model with current setup and dataset
-    fn train(&mut self) {
+    pub fn train(&mut self) {
         let inputs = self.dataset.inputs.clone();
         let expects = self.dataset.outputs.clone();
 

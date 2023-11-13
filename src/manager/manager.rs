@@ -1,6 +1,9 @@
+use std::thread;
+
 use crate::{
     adapter::{
         context::{self, Context, State},
+        nodes::Nodes,
         session::Session,
     },
     core::nn::{dataset::DataSet, nn::NN},
@@ -31,14 +34,20 @@ impl eframe::App for Manager {
                 ui.label(format!("{:?}", context.state));
                 if ui.button("load").clicked() {
                     if context.state == State::Empty {
-                        let layers = [4, 8, 8, 8, 4];
-                        let mut orgin = NN::new(&layers);
-                        orgin.rand();
+                        let layers = [2, 4, 4, 1];
+                        let mut origin = NN::new(&layers);
+                        origin.rand();
+                        context.nodes = Some(Nodes::from(&origin));
                         context.session = Some(Session {
-                            model: orgin,
+                            model: origin,
                             dataset: DataSet {
-                                inputs: vec![vec![]],
-                                outputs: vec![vec![]],
+                                inputs:vec![
+                                vec![0.0, 0.0],
+                                vec![0.0, 1.0],
+                                vec![1.0, 0.0],
+                                vec![1.0, 1.0],
+                            ],
+                                outputs: vec![vec![1.0], vec![0.0], vec![0.0], vec![1.0]]
                             },
                             option: crate::adapter::session::SessionOption {
                                 train_method:
@@ -56,6 +65,16 @@ impl eframe::App for Manager {
                 if ui.button("rand").clicked() {
                     if context.state != State::Empty {
                         context.session.as_mut().unwrap().model.rand();
+                    }
+                }
+                if ui.button("train").clicked() {
+                    if context.state != State::Empty {
+                        context.state = State::Running;
+                        context.session.as_mut().unwrap().train_ntimes(1_0000);
+                        context.nodes = Some(Nodes::from(
+                            &context.session.clone().unwrap().model,
+                        ));
+                        context.state = State::Ready;
                     }
                 }
             },

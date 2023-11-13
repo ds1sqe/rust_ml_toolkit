@@ -1,9 +1,9 @@
 #![allow(unused)]
 use crate::core::nn::{dataset::DataSet, nn::NN};
 
-use super::session::Session;
+use super::{nodes::Nodes, session::Session};
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub enum State {
     Empty,
     Loading,
@@ -11,11 +11,14 @@ pub enum State {
     Running,
 }
 
+#[derive(Clone)]
 pub struct Context {
     /// session data contains model, dataset, options
     pub session: Option<Session>,
     /// state of nn,
     pub state: State,
+    /// view
+    pub nodes: Option<Nodes>,
 }
 
 impl Default for Context {
@@ -23,6 +26,7 @@ impl Default for Context {
         Self {
             session: None,
             state: State::Empty,
+            nodes: None,
         }
     }
 }

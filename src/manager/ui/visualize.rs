@@ -50,7 +50,7 @@ fn create_node(pos: PlotPoint, node: &Node) -> Points {
 
     let radius = 10.0;
 
-    let grad = Gradient::default(1.0, -1.0);
+    let grad = Gradient::default(10.0, -10.0);
     let Color { r, g, b } = grad.get_color(node.bias as f32);
 
     let points = Points::new(vec![[pos.x, pos.y]])
@@ -85,7 +85,7 @@ fn visualize(plot_ui: &mut PlotUi, nn: Nodes) {
                 let pos_dst_x = con.dst_level as f64 * 10.0;
                 let pos_dst_y = con.dst as f64 * 2.0 - (1.0 * (len_dst - 1) as f64);
 
-                let grad = Gradient::default(1.0, -1.0);
+                let grad = Gradient::default(10.0, -10.0);
                 let Color { r, g, b } = grad.get_color(con.weight as f32);
 
                 plot_ui.line(
@@ -127,7 +127,7 @@ pub fn draw(ui: &mut Ui, context: &mut Context) -> Option<Response> {
 
     let plot = Plot::new("network").height(600.0).data_aspect(1.0);
 
-    let nodes = Nodes::from(&context.session.as_ref().unwrap().model);
+    let nodes = context.nodes.as_ref().unwrap().clone();
 
     let PlotResponse {
         response,

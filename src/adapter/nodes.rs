@@ -1,27 +1,27 @@
 use crate::core::{matrix::matrix::__Matrix, nn::nn::NN};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Nodetype {
     Input,
     Middle,
     Output,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Nodes {
     pub layers: Vec<usize>,
     pub nodes: Vec<Vec<Node>>,
     pub connections: Vec<Vec<Vec<Connection>>>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Node {
     pub nodetype: Nodetype,
     pub level: usize,
     pub bias: f64,
     pub value: f64,
 }
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Connection {
     pub dst: usize,
     pub dst_level: usize,
@@ -66,7 +66,9 @@ impl Nodes {
                         }
                     });
 
-                    for (src_idx, w) in src.weights[level - 1].col(node_idx).iter().enumerate() {
+                    for (src_idx, w) in
+                        src.weights[level - 1].col(node_idx).iter().enumerate()
+                    {
                         node_connections.push(Connection {
                             dst: node_idx,
                             dst_level: level,

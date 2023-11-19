@@ -15,6 +15,7 @@ pub enum PostX {
 pub struct SessionOption {
     pub train_method: TrainingMethod,
     pub post_x: PostX,
+    pub cycle: usize,
 }
 
 #[derive(Clone)]
@@ -29,9 +30,9 @@ pub struct Session {
 
 impl Session {
     /// train model with current setup and dataset
-    pub fn train(&mut self) {
-        let inputs = self.dataset.inputs.clone();
-        let expects = self.dataset.outputs.clone();
+    pub fn train_single(&mut self) {
+        let inputs = &self.dataset.inputs;
+        let expects = &self.dataset.outputs;
 
         let delta = match self.option.train_method {
             TrainingMethod::FiniteDiff { rate, eps } => {
@@ -47,7 +48,19 @@ impl Session {
     /// train model n times
     pub fn train_ntimes(&mut self, n: usize) {
         for _ in 0..n {
-            self.train();
+            self.train_single();
         }
+    }
+    /// train model self.cycle times
+    pub fn train(&mut self) {
+        for _ in 0..self.option.cycle {
+            self.train_single();
+        }
+    }
+
+    pub fn cost(&mut self) -> f64 {
+        let inputs = &self.dataset.inputs;
+        let expects = &self.dataset.outputs;
+        self.model.cost(inputs, expects)
     }
 }

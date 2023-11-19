@@ -51,8 +51,7 @@ fn title_bar_ui(
 
     let painter = ui.painter();
 
-    let title_bar_response =
-        ui.interact(title_bar_rect, Id::new("title_bar"), Sense::click());
+    let title_bar_response = ui.interact(title_bar_rect, Id::new("title_bar"), Sense::click());
 
     // Paint the title:
     painter.text(

@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use crate::adapter::data::{Buildable, Readable, Savable, Stringfiable};
 
 /// training dataset
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DataSet<T> {
     /// input data on nn
     pub inputs: Vec<Vec<T>>,

@@ -24,6 +24,18 @@ pub struct Manager {
     context: Context,
 }
 
+impl Manager {
+    pub fn new(cc: &eframe::CreationContext) -> Self {
+        let cc_clone = cc.egui_ctx.clone();
+        thread::spawn(move || {
+            auto_refresh(cc_clone);
+        });
+        Manager {
+            context: Context::default(),
+        }
+    }
+}
+
 impl eframe::App for Manager {
     fn clear_color(&self, _visuals: &egui::Visuals) -> [f32; 4] {
         egui::Rgba::TRANSPARENT.to_array() // Make sure we don't paint anything behind the rounded corners
@@ -121,5 +133,12 @@ pub fn get_option() -> NativeOptions {
 }
 
 pub fn startapp(options: eframe::NativeOptions) -> Result<(), eframe::Error> {
-    eframe::run_native("", options, Box::new(|_cc| Box::<Manager>::default()))
+    eframe::run_native("", options, Box::new(|cc| Box::new(Manager::new(&cc))))
+}
+
+pub fn auto_refresh(ctx: egui::Context) {
+    loop {
+        ctx.request_repaint();
+        thread::sleep(Duration::from_millis(1000 / 60));
+    }
 }

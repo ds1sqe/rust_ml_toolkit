@@ -6,10 +6,81 @@ use crate::{
     core::nn::dataset::DataSet,
 };
 
+#[derive(PartialEq)]
+enum DataSetMenu {
+    View,
+    Edit,
+    Load,
+    Save,
+}
+
+pub struct DatasetWindow {
+    is_open: bool,
+    menu: DataSetMenu,
+    dataset_view: DatasetView,
+    dataset_update: Option<DatasetUpdate>,
+}
+
+impl DatasetWindow {
+    pub fn new() -> Self {
+        Self {
+            is_open: false,
+            menu: DataSetMenu::View,
+            dataset_view: DatasetView::new(),
+            dataset_update: None,
+        }
+    }
+
+    pub fn toggle(&mut self) {
+        self.is_open = !self.is_open;
+    }
+
+    pub fn view(
+        &mut self,
+        ctx: &eframe::egui::Context,
+        ui: &mut Ui,
+        context: &mut Context,
+    ) {
+        eframe::egui::Window::new("Dataset Management")
+            .open(&mut self.is_open)
+            .resizable(true)
+            .show(ctx, |ui| {
+                ui.horizontal(|ui| {
+                    ui.selectable_value(
+                        &mut self.menu,
+                        DataSetMenu::View,
+                        "View Current",
+                    );
+                    ui.selectable_value(
+                        &mut self.menu,
+                        DataSetMenu::Edit,
+                        "Edit Current",
+                    )
+                });
+                ui.separator();
+                match self.menu {
+                    DataSetMenu::View => {
+                        self.dataset_update = None;
+                        self.dataset_view.view(ui, context);
+                    }
+                    DataSetMenu::Edit => {
+                        if self.dataset_update.is_none() {
+                            self.dataset_update = Some(DatasetUpdate::new(
+                                self.dataset_view.inputs.clone(),
+                                self.dataset_view.outputs.clone(),
+                            ));
+                        }
+                        self.dataset_update.as_mut().unwrap().view(ui, context);
+                    }
+                    _ => {}
+                }
+            });
+    }
+}
+
 pub struct DatasetView {
     inputs: Vec<String>,
     outputs: Vec<String>,
-    update: Option<UpdateDataSet>,
 }
 
 impl DatasetView {
@@ -17,7 +88,6 @@ impl DatasetView {
         Self {
             inputs: Vec::new(),
             outputs: Vec::new(),
-            update: None,
         }
     }
 }
@@ -73,29 +143,15 @@ impl DatasetView {
             ui.label("Output");
             ui.label(format!("{}", self.outputs[idx]));
         }
-
-        if ui.button("Open Update DataSet").clicked() {
-            self.update = Some(UpdateDataSet::new(
-                self.inputs.clone(),
-                self.outputs.clone(),
-            ));
-        }
-        if ui.button("Close Update DataSet").clicked() {
-            self.update = None;
-        }
-
-        if self.update.is_some() {
-            self.update.as_mut().unwrap().view(ui, context)
-        }
     }
 }
 
-pub struct UpdateDataSet {
+pub struct DatasetUpdate {
     inputs: Vec<String>,
     outputs: Vec<String>,
 }
 
-impl UpdateDataSet {
+impl DatasetUpdate {
     fn new(inputs: Vec<String>, outputs: Vec<String>) -> Self {
         Self { inputs, outputs }
     }

@@ -3,23 +3,22 @@ use std::{thread, time::Duration};
 use crate::adapter::context::Context;
 
 use super::{
-    ui::controller::{
-        control::Controller, create_dataset::DatasetView, create_model::CreateModel,
-    },
+    ui::controller::{control::Controller, create_model::CreateModel},
     ui::{
+        controller::create_dataset::DatasetWindow,
         frame::window_frame,
         viewer::{costs::CostsView, nodes::NodesView},
     },
 };
 use eframe::{
-    egui::{self, ScrollArea},
+    egui::{self},
     NativeOptions,
 };
 
 pub struct Manager {
     context: Context,
     create_model: CreateModel,
-    create_dataset: DatasetView,
+    dataset_window: DatasetWindow,
     node_view: NodesView,
     cost_view: CostsView,
 }
@@ -33,7 +32,7 @@ impl Manager {
         Manager {
             context: Context::default(),
             create_model: CreateModel::new(),
-            create_dataset: DatasetView::new(),
+            dataset_window: DatasetWindow::new(),
             node_view: NodesView { is_open: false },
             cost_view: CostsView { is_open: false },
         }
@@ -52,42 +51,50 @@ impl eframe::App for Manager {
             "Rust ML Manager",
             &mut self.context,
             |ui, context| {
-                ScrollArea::vertical().show(ui, |ui| {
-                    self.node_view.view(ctx, ui, context);
-                    if ui.button("Toggle Nodes Viewer").clicked() {
-                        self.node_view.is_open = !self.node_view.is_open;
-                    }
+                egui::SidePanel::right("Toggle Windows")
+                    .resizable(false)
+                    .default_width(160.0)
+                    .show_inside(ui, |ui| {
+                        ui.heading("Toggle Windows");
+                        ui.separator();
 
-                    self.cost_view.view(ctx, ui, context);
-                    if ui.button("Toggle Cost Viewer").clicked() {
-                        self.cost_view.is_open = !self.cost_view.is_open;
-                    }
-
-                    ui.label(format!("{:?}", context.state));
-
-                    self.create_model.view(ui, context);
-
-                    self.create_dataset.view(ui, context);
-
-                    Controller::view(ui, context);
-
-                    if context.trcv.is_some() {
-                        let w2g = context
-                            .trcv
-                            .as_ref()
-                            .unwrap()
-                            .rec
-                            .recv_timeout(Duration::from_micros(1000));
-                        if w2g.is_ok() {
-                            let w2g = w2g.unwrap();
-                            context.nodes = w2g.nodes;
-                            context.session.as_mut().unwrap().model =
-                                w2g.model.unwrap();
-                            context.costs.push(w2g.cost);
-                            println!("updated cost {:?}", w2g.cost)
+                        self.node_view.view(ctx, ui, context);
+                        if ui.button("Nodes Viewer").clicked() {
+                            self.node_view.is_open = !self.node_view.is_open;
                         }
+
+                        self.cost_view.view(ctx, ui, context);
+                        if ui.button("Cost Viewer").clicked() {
+                            self.cost_view.is_open = !self.cost_view.is_open;
+                        }
+
+                        self.dataset_window.view(ctx, ui, context);
+                        if ui.button("Manage Dataset").clicked() {
+                            self.dataset_window.toggle();
+                        }
+
+                        Controller::view(ui, context);
+                    });
+
+                ui.label(format!("{:?}", context.state));
+
+                if context.trcv.is_some() {
+                    let w2g = context
+                        .trcv
+                        .as_ref()
+                        .unwrap()
+                        .rec
+                        .recv_timeout(Duration::from_micros(1000));
+                    if w2g.is_ok() {
+                        let w2g = w2g.unwrap();
+                        context.nodes = w2g.nodes;
+                        context.session.as_mut().unwrap().model =
+                            w2g.model.unwrap();
+                        context.costs.push(w2g.cost);
+                        println!("updated cost {:?}", w2g.cost)
                     }
-                });
+                }
+                self.create_model.view(ui, context);
             },
         );
     }
@@ -95,9 +102,8 @@ impl eframe::App for Manager {
 
 pub fn get_option() -> NativeOptions {
     NativeOptions {
-        // Hide the OS-specific "chrome" around the window:
-        fullscreen: true,
         decorated: false,
+        fullscreen: false,
         min_window_size: Some(egui::vec2(400.0, 100.0)),
         initial_window_size: Some(egui::vec2(800.0, 480.0)),
         ..Default::default()

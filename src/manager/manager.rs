@@ -3,9 +3,9 @@ use std::{thread, time::Duration};
 use crate::adapter::context::Context;
 
 use super::{
-    ui::controller::{control::Controller, create_model::CreateModel},
+    ui::controller::{control::Controller, model::ModelWindow},
     ui::{
-        controller::create_dataset::DatasetWindow,
+        controller::dataset::DatasetWindow,
         frame::window_frame,
         viewer::{costs::CostsView, nodes::NodesView},
     },
@@ -17,7 +17,7 @@ use eframe::{
 
 pub struct Manager {
     context: Context,
-    create_model: CreateModel,
+    model_window: ModelWindow,
     dataset_window: DatasetWindow,
     node_view: NodesView,
     cost_view: CostsView,
@@ -31,7 +31,7 @@ impl Manager {
         });
         Manager {
             context: Context::default(),
-            create_model: CreateModel::new(),
+            model_window: ModelWindow::new(),
             dataset_window: DatasetWindow::new(),
             node_view: NodesView { is_open: false },
             cost_view: CostsView { is_open: false },
@@ -73,6 +73,11 @@ impl eframe::App for Manager {
                             self.dataset_window.toggle();
                         }
 
+                        self.model_window.view(ctx, ui, context);
+                        if ui.button("Manage Model").clicked() {
+                            self.model_window.toggle();
+                        }
+
                         Controller::view(ui, context);
                     });
 
@@ -94,7 +99,6 @@ impl eframe::App for Manager {
                         println!("updated cost {:?}", w2g.cost)
                     }
                 }
-                self.create_model.view(ui, context);
             },
         );
     }

@@ -58,22 +58,25 @@ impl DatasetWindow {
                     )
                 });
                 ui.separator();
-                match self.menu {
-                    DataSetMenu::View => {
-                        self.dataset_update = None;
-                        self.dataset_view.view(ui, context);
-                    }
-                    DataSetMenu::Edit => {
-                        if self.dataset_update.is_none() {
-                            self.dataset_update = Some(DatasetUpdate::new(
-                                self.dataset_view.inputs.clone(),
-                                self.dataset_view.outputs.clone(),
-                            ));
+
+                eframe::egui::ScrollArea::vertical().show(ui, |ui| {
+                    match self.menu {
+                        DataSetMenu::View => {
+                            self.dataset_update = None;
+                            self.dataset_view.view(ui, context);
                         }
-                        self.dataset_update.as_mut().unwrap().view(ui, context);
+                        DataSetMenu::Edit => {
+                            if self.dataset_update.is_none() {
+                                self.dataset_update = Some(DatasetUpdate::new(
+                                    self.dataset_view.inputs.clone(),
+                                    self.dataset_view.outputs.clone(),
+                                ));
+                            }
+                            self.dataset_update.as_mut().unwrap().view(ui, context);
+                        }
+                        _ => {}
                     }
-                    _ => {}
-                }
+                })
             });
     }
 }

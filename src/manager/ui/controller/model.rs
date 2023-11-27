@@ -4,7 +4,68 @@ use eframe::egui::{self, Slider};
 use crate::adapter::context::Context;
 use crate::adapter::session::{PostX, TrainingMethod};
 
-pub struct CreateModel {
+#[derive(PartialEq)]
+enum ModelMenu {
+    Create,
+    Load,
+    Save,
+}
+
+pub struct ModelWindow {
+    is_open: bool,
+    menu: ModelMenu,
+    model_create: ModelCreate,
+}
+
+impl ModelWindow {
+    pub fn new() -> Self {
+        Self {
+            is_open: false,
+            menu: ModelMenu::Create,
+            model_create: ModelCreate::new(),
+        }
+    }
+    pub fn toggle(&mut self) {
+        self.is_open = !self.is_open;
+    }
+
+    pub fn view(
+        &mut self,
+        ctx: &eframe::egui::Context,
+        ui: &mut Ui,
+        context: &mut Context,
+    ) {
+        eframe::egui::Window::new("Model Management")
+            .open(&mut self.is_open)
+            .resizable(true)
+            .show(ctx, |ui| {
+                ui.horizontal(|ui| {
+                    ui.selectable_value(
+                        &mut self.menu,
+                        ModelMenu::Create,
+                        "Create New",
+                    );
+                    ui.selectable_value(
+                        &mut self.menu,
+                        ModelMenu::Save,
+                        "Save Current",
+                    )
+                });
+                ui.separator();
+
+                eframe::egui::ScrollArea::vertical().show(ui, |ui| {
+                    match self.menu {
+                        ModelMenu::Create => {
+                            self.model_create.view(ui, context);
+                        }
+                        _ => {}
+                    }
+                })
+            });
+    }
+}
+
+pub struct ModelCreate {
     layout: String,
     train_method: TrainingMethod,
     rate: f64,
@@ -13,9 +74,9 @@ pub struct CreateModel {
     cycle: usize,
 }
 
-impl CreateModel {
+impl ModelCreate {
     pub fn new() -> Self {
-        CreateModel {
+        ModelCreate {
             layout: String::new(),
             train_method: TrainingMethod::BackProp,
             rate: 1e-3,

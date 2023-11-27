@@ -5,7 +5,7 @@ use crate::adapter::context::Context;
 use super::{
     ui::controller::{control::Controller, model::ModelWindow},
     ui::{
-        controller::dataset::DatasetWindow,
+        controller::{dataset::DatasetWindow, session::SessionWindow},
         frame::window_frame,
         viewer::{costs::CostsView, nodes::NodesView},
     },
@@ -19,6 +19,7 @@ pub struct Manager {
     context: Context,
     model_window: ModelWindow,
     dataset_window: DatasetWindow,
+    session_window: SessionWindow,
     node_view: NodesView,
     cost_view: CostsView,
 }
@@ -33,6 +34,7 @@ impl Manager {
             context: Context::default(),
             model_window: ModelWindow::new(),
             dataset_window: DatasetWindow::new(),
+            session_window: SessionWindow::new(),
             node_view: NodesView { is_open: false },
             cost_view: CostsView { is_open: false },
         }
@@ -76,6 +78,11 @@ impl eframe::App for Manager {
                         self.model_window.view(ctx, ui, context);
                         if ui.button("Manage Model").clicked() {
                             self.model_window.toggle();
+                        }
+
+                        self.session_window.view(ctx, ui, context);
+                        if ui.button("Manage Session").clicked() {
+                            self.session_window.toggle();
                         }
 
                         Controller::view(ui, context);

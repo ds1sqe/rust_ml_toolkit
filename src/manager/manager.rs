@@ -5,7 +5,10 @@ use crate::adapter::context::Context;
 use super::{
     ui::frame::window_frame,
     ui::{
-        controller::create_model::CreateModel,
+        controller::{
+            control::Controller, create_dataset::DatasetView,
+            create_model::CreateModel,
+        },
         visualize::{draw_cost, draw_node},
     },
 };
@@ -16,7 +19,8 @@ use eframe::{
 
 pub struct Manager {
     context: Context,
-    create: CreateModel,
+    create_model: CreateModel,
+    create_dataset: DatasetView,
 }
 
 impl Manager {
@@ -27,7 +31,8 @@ impl Manager {
         });
         Manager {
             context: Context::default(),
-            create: CreateModel::new(),
+            create_model: CreateModel::new(),
+            create_dataset: DatasetView::new(),
         }
     }
 }
@@ -50,7 +55,11 @@ impl eframe::App for Manager {
                     draw_cost(ui, context);
                     ui.label(format!("{:?}", context.state));
 
-                    self.create.view(ui, context);
+                    self.create_model.view(ui, context);
+
+                    self.create_dataset.view(ui, context);
+
+                    Controller::view(ui, context);
 
                     if context.trcv.is_some() {
                         let w2g = context
@@ -62,6 +71,8 @@ impl eframe::App for Manager {
                         if w2g.is_ok() {
                             let w2g = w2g.unwrap();
                             context.nodes = w2g.nodes;
+                            context.session.as_mut().unwrap().model =
+                                w2g.model.unwrap();
                             context.costs.push(w2g.cost);
                             println!("updated cost {:?}", w2g.cost)
                         }

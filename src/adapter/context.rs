@@ -124,9 +124,10 @@ impl Context {
         }
     }
     /// load training data and attach to self.session;
-    pub fn load_dataset(&mut self, path: &Path) {
+    pub fn load_dataset(&mut self, path: &Path) -> Option<bool> {
         if self.session.is_none() {
             println!("Context>>load_dataset: Session is None");
+            return None;
         } else {
             let dataset = DataSet::read(path);
             match dataset {
@@ -135,9 +136,11 @@ impl Context {
                         "Context>>load_dataset: dataset is None 
                     (faild to load dataset)"
                     );
+                    return None;
                 }
                 Some(dataset) => {
                     self.session.as_mut().unwrap().dataset = Some(dataset);
+                    return Some(true);
                 }
             }
         }

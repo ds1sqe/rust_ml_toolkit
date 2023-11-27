@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use eframe::egui;
 use eframe::egui::Ui;
 
@@ -19,6 +21,8 @@ pub struct DatasetWindow {
     menu: DataSetMenu,
     dataset_view: DatasetView,
     dataset_update: Option<DatasetUpdate>,
+    dataset_load: DatasetLoad,
+    dataset_save: DatasetSave,
 }
 
 impl DatasetWindow {
@@ -28,6 +32,8 @@ impl DatasetWindow {
             menu: DataSetMenu::View,
             dataset_view: DatasetView::new(),
             dataset_update: None,
+            dataset_load: DatasetLoad::new(),
+            dataset_save: DatasetSave::new(),
         }
     }
 
@@ -55,7 +61,17 @@ impl DatasetWindow {
                         &mut self.menu,
                         DataSetMenu::Edit,
                         "Edit Current",
-                    )
+                    );
+                    ui.selectable_value(
+                        &mut self.menu,
+                        DataSetMenu::Load,
+                        "Load from File",
+                    );
+                    ui.selectable_value(
+                        &mut self.menu,
+                        DataSetMenu::Save,
+                        "Save Current",
+                    );
                 });
                 ui.separator();
 
@@ -74,7 +90,12 @@ impl DatasetWindow {
                             }
                             self.dataset_update.as_mut().unwrap().view(ui, context);
                         }
-                        _ => {}
+                        DataSetMenu::Load => {
+                            self.dataset_load.view(ui, context);
+                        }
+                        DataSetMenu::Save => {
+                            self.dataset_save.view(ui, context);
+                        }
                     }
                 })
             });
@@ -199,6 +220,63 @@ impl DatasetUpdate {
             let ds = DataSet::new(new_inputs, new_outputs);
             context.attach_dataset(ds);
             context.state = State::Ready;
+        }
+    }
+}
+
+pub struct DatasetSave {
+    path: String,
+}
+
+impl DatasetSave {
+    pub fn new() -> Self {
+        Self {
+            path: String::new(),
+        }
+    }
+
+    pub fn view(&mut self, ui: &mut Ui, context: &mut Context) {
+        ui.add(eframe::egui::TextEdit::singleline(&mut self.path));
+        if ui.button("save").clicked() {
+            let path = Path::new(&self.path);
+            let saved = context.save_dataset(path);
+            match saved {
+                None => {
+                    println!("saving dataset failed")
+                }
+                Some(_) => {
+                    println!("saving dataset success")
+                }
+            }
+        }
+    }
+}
+
+pub struct DatasetLoad {
+    path: String,
+}
+
+impl DatasetLoad {
+    pub fn new() -> Self {
+        Self {
+            path: String::new(),
+        }
+    }
+
+    pub fn view(&mut self, ui: &mut Ui, context: &mut Context) {
+        ui.add(eframe::egui::TextEdit::singleline(&mut self.path));
+        if ui.button("load").clicked() {
+            let path = Path::new(&self.path);
+            let saved = context.load_dataset(path);
+            match saved {
+                None => {
+                    println!("dataset load failed");
+                }
+                Some(_) => {
+                    println!("dataset load success");
+                    context.state = State::Ready;
+                }
+            }
         }
     }
 }

@@ -3,13 +3,12 @@ use std::{thread, time::Duration};
 use crate::adapter::context::Context;
 
 use super::{
-    ui::frame::window_frame,
+    ui::controller::{
+        control::Controller, create_dataset::DatasetView, create_model::CreateModel,
+    },
     ui::{
-        controller::{
-            control::Controller, create_dataset::DatasetView,
-            create_model::CreateModel,
-        },
-        visualize::{draw_cost, draw_node},
+        frame::window_frame,
+        viewer::{costs::CostsView, nodes::NodesView},
     },
 };
 use eframe::{
@@ -21,6 +20,8 @@ pub struct Manager {
     context: Context,
     create_model: CreateModel,
     create_dataset: DatasetView,
+    node_view: NodesView,
+    cost_view: CostsView,
 }
 
 impl Manager {
@@ -33,6 +34,8 @@ impl Manager {
             context: Context::default(),
             create_model: CreateModel::new(),
             create_dataset: DatasetView::new(),
+            node_view: NodesView { is_open: false },
+            cost_view: CostsView { is_open: false },
         }
     }
 }
@@ -50,9 +53,16 @@ impl eframe::App for Manager {
             &mut self.context,
             |ui, context| {
                 ScrollArea::vertical().show(ui, |ui| {
-                    ui.label("Content");
-                    draw_node(ui, context);
-                    draw_cost(ui, context);
+                    self.node_view.view(ctx, ui, context);
+                    if ui.button("Toggle Nodes Viewer").clicked() {
+                        self.node_view.is_open = !self.node_view.is_open;
+                    }
+
+                    self.cost_view.view(ctx, ui, context);
+                    if ui.button("Toggle Cost Viewer").clicked() {
+                        self.cost_view.is_open = !self.cost_view.is_open;
+                    }
+
                     ui.label(format!("{:?}", context.state));
 
                     self.create_model.view(ui, context);

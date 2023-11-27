@@ -64,14 +64,14 @@ impl Default for Context {
 }
 
 impl Context {
-    /// create model
-    fn create_model(
+    /// create model and attach to self
+    pub fn create_model(
         &mut self,
         layers: &[usize],
         train_method: TrainingMethod,
         post_x: PostX,
         cycle: usize,
-    ) -> Self {
+    ) {
         let session = Session {
             model: NN::new(layers),
             dataset: None,
@@ -81,28 +81,25 @@ impl Context {
                 cycle,
             },
         };
-        Context {
-            session: Some(session),
-            state: State::Loading,
-            nodes: Some(Nodes::from(&session.model)),
-            trcv: None,
-            costs: Vec::new(),
-        }
+        self.session = Some(session.clone());
+        self.state = State::Loading;
+        self.nodes = Some(Nodes::from(&session.model));
+        self.costs = Vec::new();
     }
     /// load session from saved file
-    fn load_session(path: &Path) -> Option<Self> {
+    pub fn load_session(path: &Path) -> Option<Self> {
         let session = Session::read(path);
         if session.is_none() {
             return None;
         };
-        let state = if session.unwrap().dataset.is_none() {
+        let state = if session.as_ref().unwrap().dataset.is_none() {
             State::Loading
         } else {
             State::Ready
         };
 
         Some(Context {
-            session,
+            session: session.clone(),
             state,
             nodes: Some(Nodes::from(&session.unwrap().model)),
             trcv: None,
@@ -110,24 +107,24 @@ impl Context {
         })
     }
     /// save model
-    fn save_session(&self, path: &Path) -> Option<bool> {
+    pub fn save_session(&self, path: &Path) -> Option<bool> {
         if self.session.is_none() {
             println!("Context>>save_session: Session is None");
             None
         } else {
-            Session::save(&self.session.unwrap(), path)
+            Session::save(self.session.as_ref().unwrap(), path)
         }
     }
     /// attach data set to self.session
-    fn attach_dataset(&mut self, data_set: DataSet<f64>) {
+    pub fn attach_dataset(&mut self, data_set: DataSet<f64>) {
         if self.session.is_none() {
             println!("Context>>attach_dataset: Session is None");
         } else {
-            self.session.unwrap().dataset = Some(data_set);
+            self.session.as_mut().unwrap().dataset = Some(data_set);
         }
     }
     /// load training data and attach to self.session;
-    fn load_dataset(&mut self, path: &Path) {
+    pub fn load_dataset(&mut self, path: &Path) {
         if self.session.is_none() {
             println!("Context>>load_dataset: Session is None");
         } else {
@@ -140,18 +137,18 @@ impl Context {
                     );
                 }
                 Some(dataset) => {
-                    self.session.unwrap().dataset = Some(dataset);
+                    self.session.as_mut().unwrap().dataset = Some(dataset);
                 }
             }
         }
     }
     /// save context's session's dataset to given path
-    fn save_dataset(&mut self, path: &Path) -> Option<bool> {
+    pub fn save_dataset(&mut self, path: &Path) -> Option<bool> {
         if self.session.is_none() {
             println!("Context>>save_dataset: Session is None");
             return None;
         } else {
-            match self.session.unwrap().dataset {
+            match self.session.clone().unwrap().dataset {
                 None => {
                     println!("Context>>save_dataset: dataset is None");
                     return None;
@@ -161,7 +158,7 @@ impl Context {
         }
     }
     /// start training (spawn_learner)
-    fn start(&mut self) {
+    pub fn start(&mut self) {
         match self.state {
             State::Loading | State::Empty => {
                 println!("Context>>start: Not Readied");
@@ -178,7 +175,7 @@ impl Context {
         }
     }
     /// stop training
-    fn stop(&mut self) {
+    pub fn stop(&mut self) {
         match self.state {
             State::Running => {
                 let res = self.trcv.as_ref().unwrap().snd.send(G2w {

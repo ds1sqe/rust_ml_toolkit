@@ -13,12 +13,12 @@ use super::data::Readable;
 use super::data::Savable;
 use super::data::Stringfiable;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum TrainingMethod {
     FiniteDiff { rate: f64, eps: f64 },
     BackProp,
 }
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum PostX {
     Sigmoid,
 }
@@ -43,7 +43,7 @@ pub struct Session {
 impl Session {
     /// train model with current setup and dataset
     pub fn train_single(&mut self) {
-        match self.dataset {
+        match self.dataset.clone() {
             None => {
                 println!("Session>>train_single: Dataset is None")
             }
@@ -81,7 +81,7 @@ impl Session {
     }
 
     pub fn cost(&mut self) -> f64 {
-        match self.dataset {
+        match self.dataset.clone() {
             None => {
                 // HACK: change return type (f64->Option f64)
                 println!("Session>>train_single: Dataset is None");

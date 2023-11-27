@@ -1,27 +1,22 @@
-use std::{sync::mpsc::channel, thread, time::Duration};
+use std::{thread, time::Duration};
 
-use crate::{
-    adapter::{
-        context::{self, Context, State, Transceiver},
-        learner::{spawn_learner, ControlSignal, G2w},
-        nodes::Nodes,
-        session::Session,
-    },
-    core::nn::{dataset::DataSet, nn::NN},
-};
+use crate::adapter::context::Context;
 
 use super::{
     ui::frame::window_frame,
-    ui::visualize::{draw_cost, draw_node},
+    ui::{
+        controller::create_model::CreateModel,
+        visualize::{draw_cost, draw_node},
+    },
 };
 use eframe::{
     egui::{self, ScrollArea},
     NativeOptions,
 };
 
-#[derive(Default)]
 pub struct Manager {
     context: Context,
+    create: CreateModel,
 }
 
 impl Manager {
@@ -32,6 +27,7 @@ impl Manager {
         });
         Manager {
             context: Context::default(),
+            create: CreateModel::new(),
         }
     }
 }
@@ -53,54 +49,9 @@ impl eframe::App for Manager {
                     draw_node(ui, context);
                     draw_cost(ui, context);
                     ui.label(format!("{:?}", context.state));
-                    if ui.button("load").clicked() {
-                        if context.state == State::Empty {
-                            let layers = [2, 4, 4, 1];
-                            let mut origin = NN::new(&layers);
-                            origin.rand();
-                            context.nodes = Some(Nodes::from(&origin));
-                            context.session = Some(Session {
-                                model: origin,
-                                dataset: DataSet {
-                                    inputs: vec![
-                                        vec![0.0, 0.0],
-                                        vec![0.0, 1.0],
-                                        vec![1.0, 0.0],
-                                        vec![1.0, 1.0],
-                                    ],
-                                    outputs: vec![vec![1.0], vec![0.0], vec![0.0], vec![1.0]],
-                                },
-                                option: crate::adapter::session::SessionOption {
-                                    train_method: crate::adapter::session::TrainingMethod::BackProp,
-                                    post_x: crate::adapter::session::PostX::Sigmoid,
-                                    cycle: 1000,
-                                },
-                            });
-                            context.state = State::Ready;
-                        }
-                    }
-                    if ui.button("drop").clicked() {
-                        context.session = None;
-                        if context.trcv.is_some() {
-                            let res = context.trcv.as_ref().unwrap().snd.send(G2w {
-                                sig: ControlSignal::Stop,
-                            });
-                        }
-                        context.state = State::Empty;
-                    }
-                    if ui.button("rand").clicked() {
-                        if context.state != State::Empty {
-                            context.session.as_mut().unwrap().model.rand();
-                        }
-                    }
-                    if ui.button("train").clicked() {
-                        if context.state == State::Ready {
-                            let (snd, rx) = channel();
-                            let rec = spawn_learner(context.session.clone().unwrap(), rx);
-                            context.state = State::Running;
-                            context.trcv = Some(Transceiver { snd, rec })
-                        }
-                    }
+
+                    self.create.view(ui, context);
+
                     if context.trcv.is_some() {
                         let w2g = context
                             .trcv

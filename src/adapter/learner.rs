@@ -4,7 +4,7 @@ use std::{
     time::Duration,
 };
 
-use crate::core::nn::nn::NN;
+use crate::core::nn::{cost::CostInfo, nn::NN};
 
 use super::{nodes::Nodes, session::Session};
 
@@ -68,7 +68,7 @@ pub struct G2w {
 /// data (worker => gui)
 pub struct W2g {
     pub cycle: usize,
-    pub cost: f64,
+    pub cost_info: Option<CostInfo>,
     pub nodes: Option<Nodes>,
     pub model: Option<NN>,
 }
@@ -110,11 +110,11 @@ pub fn handle(rx: Receiver<G2w>, snd: Sender<W2g>, session: Session) {
         cycle += 1;
 
         let nodes = Some(Nodes::from(&session.model));
-        let cost = session.cost();
+        let cost_info = session.cost();
 
         let snd_res = snd.send(W2g {
             cycle: cycle * session.option.cycle,
-            cost,
+            cost_info,
             nodes,
             model: Some(session.model.clone()),
         });

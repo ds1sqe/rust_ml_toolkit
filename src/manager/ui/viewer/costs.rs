@@ -1,38 +1,17 @@
-use std::thread;
-
-use eframe::{
-    egui,
-    egui::{Frame, Response, Sense, Ui},
-    emath::remap,
-    epaint::Vec2,
-    epaint::{self, Color32, Stroke},
-};
-use egui_plot::{
-    self, Bar, BarChart, Line, Plot, PlotPoint, PlotPoints, PlotResponse, PlotUi,
-    Points,
-};
+use eframe::egui::{Response, Ui};
+use egui_plot::{self, Bar, BarChart, Plot, PlotPoint, PlotResponse, PlotUi};
 
 use crate::{
-    adapter::{
-        context::{Context, State},
-        nodes::{Node, Nodes, Nodetype},
-    },
-    core::nn::nn::NN,
+    adapter::context::{Context, State},
+    core::nn::cost::CostInfo,
 };
-
-use super::super::gradient::{Color, Gradient};
 
 pub struct CostsView {
     pub is_open: bool,
 }
 
 impl CostsView {
-    pub fn view(
-        &mut self,
-        ctx: &eframe::egui::Context,
-        ui: &mut Ui,
-        context: &mut Context,
-    ) {
+    pub fn view(&mut self, ctx: &eframe::egui::Context, ui: &mut Ui, context: &mut Context) {
         eframe::egui::Window::new("CostsViewer")
             .open(&mut self.is_open)
             .resizable(true)
@@ -40,7 +19,7 @@ impl CostsView {
     }
 }
 
-fn visualize_costs(plot_ui: &mut PlotUi, costs: Vec<f64>) {
+fn visualize_costs(plot_ui: &mut PlotUi, costs: Vec<CostInfo>) {
     // let width = nn.layers.len();
     // let height = nn.layers.iter().max().unwrap();
 
@@ -53,10 +32,10 @@ fn visualize_costs(plot_ui: &mut PlotUi, costs: Vec<f64>) {
         costs
             .iter()
             .enumerate()
-            .map(|(cycle, cost)| {
-                Bar::new(cycle as f64, cost.log10())
+            .map(|(cycle, cost_info)| {
+                Bar::new(cycle as f64, cost_info.avg.log10())
                     .width(1.0)
-                    .name(format!("cost: {}\ncycle: {}", cost, cycle))
+                    .name(format!("cost: {}\ncycle: {}", cost_info.avg, cycle))
             })
             .collect(),
     );
@@ -72,19 +51,11 @@ pub fn draw_cost(ui: &mut Ui, context: &mut Context) -> Option<Response> {
     let plot = Plot::new("costs").height(300.0).clamp_grid(true);
     //.data_aspect(100.0);
 
-    let costs = context.costs.clone();
+    let costs = context.cost_info.clone();
 
     let PlotResponse {
         response,
-        inner:
-            (
-                screen_pos,
-                pointer_coordinate,
-                pointer_coordinate_drag_delta,
-                bounds,
-                hovered,
-                lll,
-            ),
+        inner: (screen_pos, pointer_coordinate, pointer_coordinate_drag_delta, bounds, hovered, lll),
         ..
     } = plot.show(ui, |plot_ui| {
         (
@@ -121,4 +92,3 @@ pub fn draw_cost(ui: &mut Ui, context: &mut Context) -> Option<Response> {
 
     Some(response)
 }
-

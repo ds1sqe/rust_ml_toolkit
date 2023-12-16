@@ -4,7 +4,7 @@ use std::{
     sync::mpsc::{channel, Receiver, Sender},
 };
 
-use crate::core::nn::{dataset::DataSet, nn::NN};
+use crate::core::nn::{cost::CostInfo, dataset::DataSet, nn::NN};
 
 use super::{
     data::{Readable, Savable},
@@ -36,7 +36,7 @@ pub struct Context {
     /// transceiver between learnner thread
     pub trcv: Option<Transceiver>,
     /// costs history
-    pub costs: Vec<f64>,
+    pub cost_info: Vec<CostInfo>,
 }
 
 impl Clone for Context {
@@ -45,7 +45,7 @@ impl Clone for Context {
             session: self.session.clone(),
             state: self.state.clone(),
             nodes: self.nodes.clone(),
-            costs: self.costs.clone(),
+            cost_info: self.cost_info.clone(),
             trcv: None,
         }
     }
@@ -55,7 +55,7 @@ impl Default for Context {
     fn default() -> Self {
         Self {
             state: State::Empty,
-            costs: Vec::new(),
+            cost_info: Vec::new(),
             session: None,
             nodes: None,
             trcv: None,
@@ -84,7 +84,7 @@ impl Context {
         self.session = Some(session.clone());
         self.state = State::Loading;
         self.nodes = Some(Nodes::from(&session.model));
-        self.costs = Vec::new();
+        self.cost_info = Vec::new();
     }
     /// load session from saved file
     pub fn load_session(path: &Path) -> Option<Self> {
@@ -103,7 +103,7 @@ impl Context {
             state,
             nodes: Some(Nodes::from(&session.unwrap().model)),
             trcv: None,
-            costs: Vec::new(),
+            cost_info: Vec::new(),
         })
     }
     /// save model

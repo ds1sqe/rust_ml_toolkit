@@ -4,6 +4,7 @@ use std::io::Read;
 use std::io::Write;
 use std::path::Path;
 
+use crate::core::nn::cost::CostInfo;
 use crate::core::nn::{dataset::DataSet, nn::NN};
 use serde::Deserialize;
 use serde::Serialize;
@@ -53,14 +54,11 @@ impl Session {
 
                 let delta = match self.option.train_method {
                     TrainingMethod::FiniteDiff { rate, eps } => {
-                        let mut delta =
-                            self.model.finite_diff(&inputs, &expects, &eps);
+                        let mut delta = self.model.finite_diff(&inputs, &expects, &eps);
                         delta.mul(&rate);
                         delta
                     }
-                    TrainingMethod::BackProp => {
-                        self.model.backprop(&inputs, &expects)
-                    }
+                    TrainingMethod::BackProp => self.model.backprop(&inputs, &expects),
                 };
 
                 self.model.learn(&delta)
@@ -80,17 +78,16 @@ impl Session {
         }
     }
 
-    pub fn cost(&mut self) -> f64 {
+    pub fn cost(&mut self) -> Option<CostInfo> {
         match self.dataset.clone() {
             None => {
-                // HACK: change return type (f64->Option f64)
                 println!("Session>>train_single: Dataset is None");
-                return 0.0;
+                return None;
             }
             Some(ds) => {
                 let inputs = &ds.inputs;
                 let expects = &ds.outputs;
-                return self.model.cost(inputs, expects);
+                return Some(self.model.cost_info(inputs, expects));
             }
         }
     }

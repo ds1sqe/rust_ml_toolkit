@@ -100,10 +100,11 @@ impl eframe::App for Manager {
                     if w2g.is_ok() {
                         let w2g = w2g.unwrap();
                         context.nodes = w2g.nodes;
-                        context.session.as_mut().unwrap().model =
-                            w2g.model.unwrap();
-                        context.costs.push(w2g.cost);
-                        println!("updated cost {:?}", w2g.cost)
+                        context.session.as_mut().unwrap().model = w2g.model.unwrap();
+
+                        if w2g.cost_info.is_some() {
+                            context.cost_info.push(w2g.cost_info.unwrap());
+                        }
                     }
                 }
             },

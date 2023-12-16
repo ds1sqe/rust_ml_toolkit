@@ -1,13 +1,13 @@
 use std::{thread, time::Duration};
 
-use crate::adapter::context::Context;
+use crate::adapter::context::{Context, State};
 
 use super::{
     ui::controller::{control::Controller, model::ModelWindow},
     ui::{
         controller::{dataset::DatasetWindow, session::SessionWindow},
         frame::window_frame,
-        viewer::{costs::CostsView, nodes::NodesView},
+        viewer::{costs::CostsWindow, nodes::NodesView},
     },
 };
 use eframe::{
@@ -21,7 +21,7 @@ pub struct Manager {
     dataset_window: DatasetWindow,
     session_window: SessionWindow,
     node_view: NodesView,
-    cost_view: CostsView,
+    cost_view: CostsWindow,
 }
 
 impl Manager {
@@ -36,7 +36,7 @@ impl Manager {
             dataset_window: DatasetWindow::new(),
             session_window: SessionWindow::new(),
             node_view: NodesView { is_open: false },
-            cost_view: CostsView { is_open: false },
+            cost_view: CostsWindow::new(),
         }
     }
 }
@@ -60,14 +60,16 @@ impl eframe::App for Manager {
                         ui.heading("Toggle Windows");
                         ui.separator();
 
-                        self.node_view.view(ctx, ui, context);
-                        if ui.button("Nodes Viewer").clicked() {
-                            self.node_view.is_open = !self.node_view.is_open;
-                        }
+                        if context.state != State::Empty {
+                            self.node_view.view(ctx, ui, context);
+                            if ui.button("Nodes Viewer").clicked() {
+                                self.node_view.is_open = !self.node_view.is_open;
+                            }
 
-                        self.cost_view.view(ctx, ui, context);
-                        if ui.button("Cost Viewer").clicked() {
-                            self.cost_view.is_open = !self.cost_view.is_open;
+                            self.cost_view.view(ctx, ui, context);
+                            if ui.button("Cost Viewer").clicked() {
+                                self.cost_view.toggle()
+                            }
                         }
 
                         self.dataset_window.view(ctx, ui, context);

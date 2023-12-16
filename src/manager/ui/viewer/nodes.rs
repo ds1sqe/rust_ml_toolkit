@@ -4,9 +4,7 @@ use eframe::{
     egui::{Response, Ui},
     epaint::Color32,
 };
-use egui_plot::{
-    self, Line, Plot, PlotPoint, PlotPoints, PlotResponse, PlotUi, Points,
-};
+use egui_plot::{self, AxisHints, Line, Plot, PlotPoint, PlotPoints, PlotResponse, PlotUi, Points};
 
 use crate::adapter::{
     context::{Context, State},
@@ -20,12 +18,7 @@ pub struct NodesView {
 }
 
 impl NodesView {
-    pub fn view(
-        &mut self,
-        ctx: &eframe::egui::Context,
-        ui: &mut Ui,
-        context: &mut Context,
-    ) {
+    pub fn view(&mut self, ctx: &eframe::egui::Context, ui: &mut Ui, context: &mut Context) {
         eframe::egui::Window::new("NodesViewer")
             .open(&mut self.is_open)
             .resizable(true)
@@ -91,8 +84,7 @@ fn visualize(plot_ui: &mut PlotUi, nn: Nodes) {
                 plot_ui.line(
                     Line::new(PlotPoints::from_explicit_callback(
                         move |x| {
-                            (pos_dst_y - pos_src_y) * (x - pos_src_x)
-                                / (pos_dst_x - pos_src_x)
+                            (pos_dst_y - pos_src_y) * (x - pos_src_x) / (pos_dst_x - pos_src_x)
                                 + pos_src_y
                         },
                         (pos_src_x + 0.2)..(pos_dst_x - 0.2),
@@ -124,55 +116,22 @@ pub fn draw_node(ui: &mut Ui, context: &mut Context) -> Option<Response> {
         _ => (),
     }
 
-    let plot = Plot::new("network").height(600.0).data_aspect(1.0);
+    let x_axes = vec![AxisHints::default().label("Level")];
+    let y_axes = vec![AxisHints::default().label("Nodes")];
+
+    let plot = Plot::new("network")
+        .height(600.0)
+        .data_aspect(1.0)
+        .custom_x_axes(x_axes)
+        .custom_y_axes(y_axes);
 
     let nodes = context.nodes.as_ref().unwrap().clone();
 
     let PlotResponse {
         response,
-        inner:
-            (
-                screen_pos,
-                pointer_coordinate,
-                pointer_coordinate_drag_delta,
-                bounds,
-                hovered,
-                lll,
-            ),
+        inner: ((),),
         ..
-    } = plot.show(ui, |plot_ui| {
-        (
-            plot_ui.screen_from_plot(PlotPoint::new(0.0, 0.0)),
-            plot_ui.pointer_coordinate(),
-            plot_ui.pointer_coordinate_drag_delta(),
-            plot_ui.plot_bounds(),
-            plot_ui.response().hovered(),
-            visualize(plot_ui, nodes),
-            //plot_ui.points(circle(PlotPoint::new(0.0, 0.0))),
-        )
-    });
-
-    ui.label(format!(
-        "plot bounds: min: {:.02?}, max: {:.02?}",
-        bounds.min(),
-        bounds.max()
-    ));
-    ui.label(format!(
-        "origin in screen coordinates: x: {:.02}, y: {:.02}",
-        screen_pos.x, screen_pos.y
-    ));
-    ui.label(format!("plot hovered: {hovered}"));
-    let coordinate_text = if let Some(coordinate) = pointer_coordinate {
-        format!("x: {:.02}, y: {:.02}", coordinate.x, coordinate.y)
-    } else {
-        "None".to_owned()
-    };
-    ui.label(format!("pointer coordinate: {coordinate_text}"));
-    let coordinate_text = format!(
-        "x: {:.02}, y: {:.02}",
-        pointer_coordinate_drag_delta.x, pointer_coordinate_drag_delta.y
-    );
-    ui.label(format!("pointer coordinate drag delta: {coordinate_text}"));
+    } = plot.show(ui, |plot_ui| (visualize(plot_ui, nodes),));
 
     Some(response)
 }

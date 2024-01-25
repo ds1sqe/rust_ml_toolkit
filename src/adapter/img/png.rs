@@ -1,4 +1,4 @@
-use std::fs::File;
+use std::{fs::File, io::BufWriter, path::Path};
 
 use log::debug;
 use png::ColorType;
@@ -8,6 +8,14 @@ use crate::core::matrix::matrix::{Matrix, __Matrix};
 #[derive(Debug)]
 pub enum ImgError {
     DecodeError,
+    EncodeError,
+}
+
+#[derive(Debug)]
+pub struct ImageMatrix {
+    pub height: u32,
+    pub width: u32,
+    pub mat: Matrix<f64>,
 }
 
 /// decode provided img into matrix form.
@@ -18,7 +26,7 @@ pub enum ImgError {
 ///
 /// This function will return an error if failed to decode provided img
 ///
-pub fn png2mat(file: File) -> Result<Matrix<f64>, ImgError> {
+pub fn png2mat(file: File) -> Result<ImageMatrix, ImgError> {
     let decoder = png::Decoder::new(file);
 
     let mut reader = decoder.read_info().unwrap();
@@ -45,7 +53,54 @@ pub fn png2mat(file: File) -> Result<Matrix<f64>, ImgError> {
         }
     }
 
-    return Ok(mat);
+    return Ok(ImageMatrix {
+        height: info.height,
+        width: info.width,
+        mat,
+    });
+}
+
+/// encode provided matrix into 8bit grayscale image(png) file.
+/// @arg file : png img file
+///
+/// # Errors ImgError::EncodeError
+///
+/// This function will return an error if failed to encode img
+///
+
+pub fn mat2png(imat: ImageMatrix, path: &Path) -> Result<(), ImgError> {
+    let file = File::create(path);
+
+    if file.is_err() {
+        return Err(ImgError::EncodeError);
+    }
+
+    let file = file.unwrap();
+
+    let ref mut writer = BufWriter::new(file);
+
+    let mut encoder = png::Encoder::new(writer, imat.width, imat.height);
+
+    encoder.set_color(png::ColorType::Grayscale);
+
+    encoder.set_depth(png::BitDepth::Eight);
+
+    let mut writer = encoder.write_header().unwrap();
+
+    let mut buf = vec![0_u8; (imat.width * imat.height) as usize];
+
+    for yidx in 0..imat.height {
+        for xidx in 0..imat.width {
+            let idx = (yidx * imat.width + xidx) as usize;
+            buf[idx] = (imat.mat.at(idx, 2) * 255 as f64) as u8
+        }
+    }
+
+    if writer.write_image_data(&buf).is_ok() {
+        return Ok(());
+    } else {
+        return Err(ImgError::EncodeError);
+    }
 }
 
 #[test]
@@ -62,8 +117,32 @@ fn test_png2mat() {
     for yidx in 0..HEIGHT {
         for xidx in 0..WIDTH {
             let idx = (yidx * WIDTH + xidx) as usize;
-            print!("{:>4}", (mat.at(idx, 2) * 255 as f64) as u8)
+            print!("{:>4}", (mat.mat.at(idx, 2) * 255 as f64) as u8)
         }
         println!()
     }
+}
+
+#[test]
+fn test_mat2png() {
+    println!("Converting file to matrix...");
+
+    let file = File::open("data/img/n9.png").unwrap();
+    const WIDTH: usize = 28;
+    const HEIGHT: usize = 28;
+    let mat = png2mat(file).unwrap();
+
+    println!("printing matrix...");
+
+    for yidx in 0..HEIGHT {
+        for xidx in 0..WIDTH {
+            let idx = (yidx * WIDTH + xidx) as usize;
+            print!("{:>4}", (mat.mat.at(idx, 2) * 255 as f64) as u8)
+        }
+        println!()
+    }
+
+    let ok = mat2png(mat, Path::new("data/img/n9test.png"));
+
+    assert!(ok.is_ok())
 }

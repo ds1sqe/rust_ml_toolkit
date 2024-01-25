@@ -1,5 +1,3 @@
-use std::thread;
-
 use eframe::{
     egui::{Response, Ui},
     epaint::Color32,

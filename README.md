@@ -29,23 +29,31 @@ Rust Machine Learning Toolkit from scratch
 
 i will call neural network as NN.
 
-1. Core
-   1.1 NN & matrix
-   1.1.1 matrix operations
-   1.1.2 CRUD
+### 1. Core
 
-   1.2 learning methods
-   1.2.1 finite difference
-   1.2.2 back propagation
+#### 1.1 NN & matrix
 
-2. Adapter
-   2.1 Context & Session
-   -- manage state of model (NN)
-   -- save or load model or dataset
-   2.2 image
-   -- convert img to 2d matrix and vice versa
+1.  matrix operations
+2.  CRUD
 
-3. GUI manager
-   3.1 cost info
-   3.2 node state info
-   3.3 network view
+#### 1.2 learning methods
+
+1.  finite difference
+2.  back propagation
+
+### 2. Adapter
+
+#### 1. Context & Session
+
+-- manage state of model (NN)
+-- save or load model or dataset
+
+#### 2. image
+
+-- convert img to 2d matrix and vice versa
+
+### 3. GUI manager
+
+1.  cost info
+2.  node state info
+3.  network view

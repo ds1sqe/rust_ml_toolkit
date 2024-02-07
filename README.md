@@ -11,19 +11,22 @@ Rust Machine Learning Toolkit from scratch
 
 - This project has 3 parts like below
 
-1. Core
-   the core feature of toolkit.
-   implementation of matrix, neural network,
-   and various internal methods for that
+### 1. Core
 
-2. Adapter
-   provide utility feature to user
-   by interacting with core and
-   manipulating data
+the core feature of toolkit.
+implementation of matrix, neural network,
+and various internal methods for that
 
-3. Manager
-   GUI layer of project
-   interact with user
+### 2. Adapter
+
+provide utility feature to user
+by interacting with core and
+manipulating data
+
+### 3. Manager
+
+GUI layer of project
+interact with user
 
 ## This project includes
 

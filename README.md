@@ -12,18 +12,18 @@ Rust Machine Learning Toolkit from scratch
 - This project has 3 parts like below
 
 1. Core
-   -- the core feature of toolkit.
-   -- implementation of matrix, neural network,
-   -- and various internal methods for that
+   the core feature of toolkit.
+   implementation of matrix, neural network,
+   and various internal methods for that
 
 2. Adapter
-   -- provide utility feature to user
-   -- by interacting with core and
-   -- manipulating data
+   provide utility feature to user
+   by interacting with core and
+   manipulating data
 
 3. Manager
-   -- GUI layer of project
-   -- interact with user
+   GUI layer of project
+   interact with user
 
 ## This project includes
 
@@ -45,12 +45,12 @@ i will call neural network as NN.
 
 #### 1. Context & Session
 
--- manage state of model (NN)
--- save or load model or dataset
+manage state of model (NN)
+save or load model or dataset
 
 #### 2. image
 
--- convert img to 2d matrix and vice versa
+convert img to 2d matrix and vice versa
 
 ### 3. GUI manager
 

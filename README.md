@@ -62,7 +62,20 @@ convert img to 2d matrix and vice versa
 ### 3. GUI manager
 
 1.  cost info
+
     ![cost_view](./doc/img/cost_view.gif)
-2.  node state info
-3.  network view
+
+2.  network view & node state info
+
     ![node_view](./doc/img/node_view.gif)
+
+# How to run this project?
+
+clone this project and just
+
+```bash
+cargo run
+
+```
+
+will launch the GUI manager

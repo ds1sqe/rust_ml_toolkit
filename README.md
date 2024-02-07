@@ -2,6 +2,8 @@
 
 Rust Machine Learning Toolkit from scratch
 
+![manager_main](./doc/img/manager_main.png)
+
 ## Purpose
 
 - I created this project to study deep in ml.

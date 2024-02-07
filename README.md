@@ -57,8 +57,12 @@ save or load model or dataset
 
 convert img to 2d matrix and vice versa
 
+![png2mat](./doc/img/png2mat.png)
+
 ### 3. GUI manager
 
 1.  cost info
+    ![cost_view](./doc/img/cost_view.gif)
 2.  node state info
 3.  network view
+    ![node_view](./doc/img/node_view.gif)

@@ -1,5 +1,5 @@
 [package]
-name = "ml_in_rust"
+name = "rust_ml_toolkit"
 version = "0.1.0"
 edition = "2021"
 

@@ -1,4 +1,4 @@
-use ml_in_rust::core::nn::nn;
+use rust_ml_toolkit::core::nn::nn;
 
 fn main() {
     // using finite_diff

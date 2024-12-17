@@ -17,48 +17,36 @@ pub struct ModelWindow {
     model_create: ModelCreate,
 }
 
-impl ModelWindow {
-    pub fn new() -> Self {
+impl Default for ModelWindow {
+    fn default() -> Self {
         Self {
             is_open: false,
             menu: ModelMenu::Create,
-            model_create: ModelCreate::new(),
+            model_create: ModelCreate::default(),
         }
     }
+}
+
+impl ModelWindow {
     pub fn toggle(&mut self) {
         self.is_open = !self.is_open;
     }
 
-    pub fn view(
-        &mut self,
-        ctx: &eframe::egui::Context,
-        ui: &mut Ui,
-        context: &mut Context,
-    ) {
+    pub fn view(&mut self, ctx: &eframe::egui::Context, _: &mut Ui, context: &mut Context) {
         eframe::egui::Window::new("Model Management")
             .open(&mut self.is_open)
             .resizable(true)
             .show(ctx, |ui| {
                 ui.horizontal(|ui| {
-                    ui.selectable_value(
-                        &mut self.menu,
-                        ModelMenu::Create,
-                        "Create New",
-                    );
-                    ui.selectable_value(
-                        &mut self.menu,
-                        ModelMenu::Save,
-                        "Save Current",
-                    )
+                    ui.selectable_value(&mut self.menu, ModelMenu::Create, "Create New");
+                    ui.selectable_value(&mut self.menu, ModelMenu::Load, "Load Model");
+                    ui.selectable_value(&mut self.menu, ModelMenu::Save, "Save Current")
                 });
                 ui.separator();
 
                 eframe::egui::ScrollArea::vertical().show(ui, |ui| {
-                    match self.menu {
-                        ModelMenu::Create => {
-                            self.model_create.view(ui, context);
-                        }
-                        _ => {}
+                    if self.menu == ModelMenu::Create {
+                        self.model_create.view(ui, context);
                     }
                 })
             });
@@ -74,8 +62,8 @@ pub struct ModelCreate {
     cycle: usize,
 }
 
-impl ModelCreate {
-    pub fn new() -> Self {
+impl Default for ModelCreate {
+    fn default() -> Self {
         ModelCreate {
             layout: String::new(),
             train_method: TrainingMethod::BackProp,
@@ -85,22 +73,18 @@ impl ModelCreate {
             cycle: 1000,
         }
     }
+}
+
+impl ModelCreate {
     pub fn view(&mut self, ui: &mut Ui, context: &mut Context) {
         ui.horizontal(|ui| {
             ui.label("Layout");
-            ui.add(
-                egui::TextEdit::singleline(&mut self.layout)
-                    .hint_text("ex) 8,8,8,10"),
-            );
+            ui.add(egui::TextEdit::singleline(&mut self.layout).hint_text("ex) 8,8,8,10"));
         });
 
         ui.horizontal(|ui| {
             ui.label("TrainingMethod");
-            ui.radio_value(
-                &mut self.train_method,
-                TrainingMethod::BackProp,
-                "BackProp",
-            );
+            ui.radio_value(&mut self.train_method, TrainingMethod::BackProp, "BackProp");
             ui.radio_value(
                 &mut self.train_method,
                 TrainingMethod::FiniteDiff {
@@ -144,11 +128,10 @@ impl ModelCreate {
 
         if ui.button("Create").clicked() {
             let layers: Vec<&str> = self.layout.split(',').collect();
-            let layers: Vec<usize> =
-                layers.iter().map(|s| s.parse::<usize>().unwrap()).collect();
+            let layers: Vec<usize> = layers.iter().map(|s| s.parse::<usize>().unwrap()).collect();
             let train_method = self.train_method.clone();
             let post_x = self.post_x.clone();
-            let cycle = self.cycle.clone();
+            let cycle = self.cycle;
             context.create_model(&layers, train_method, post_x, cycle);
         }
     }

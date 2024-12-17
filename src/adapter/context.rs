@@ -4,7 +4,7 @@ use std::{
     sync::mpsc::{channel, Receiver, Sender},
 };
 
-use crate::core::nn::{cost::CostInfo, dataset::DataSet, nn::NN};
+use crate::core::nn::{cost::CostInfo, dataset::DataSet, network::NN};
 
 use super::{
     data::{Readable, Savable},
@@ -89,9 +89,7 @@ impl Context {
     /// load session from saved file
     pub fn load_session(path: &Path) -> Option<Self> {
         let session = Session::read(path);
-        if session.is_none() {
-            return None;
-        };
+        session.as_ref()?;
         let state = if session.as_ref().unwrap().dataset.is_none() {
             State::Loading
         } else {
@@ -127,7 +125,7 @@ impl Context {
     pub fn load_dataset(&mut self, path: &Path) -> Option<bool> {
         if self.session.is_none() {
             println!("Context>>load_dataset: Session is None");
-            return None;
+            None
         } else {
             let dataset = DataSet::read(path);
             match dataset {
@@ -136,11 +134,11 @@ impl Context {
                         "Context>>load_dataset: dataset is None 
                     (faild to load dataset)"
                     );
-                    return None;
+                    None
                 }
                 Some(dataset) => {
                     self.session.as_mut().unwrap().dataset = Some(dataset);
-                    return Some(true);
+                    Some(true)
                 }
             }
         }
@@ -149,12 +147,12 @@ impl Context {
     pub fn save_dataset(&mut self, path: &Path) -> Option<bool> {
         if self.session.is_none() {
             println!("Context>>save_dataset: Session is None");
-            return None;
+            None
         } else {
             match self.session.clone().unwrap().dataset {
                 None => {
                     println!("Context>>save_dataset: dataset is None");
-                    return None;
+                    None
                 }
                 Some(dataset) => DataSet::save(&dataset, path),
             }
@@ -179,14 +177,11 @@ impl Context {
     }
     /// stop training
     pub fn stop(&mut self) {
-        match self.state {
-            State::Running => {
-                let res = self.trcv.as_ref().unwrap().snd.send(G2w {
-                    sig: ControlSignal::Stop,
-                });
-                self.state = State::Ready;
-            }
-            _ => {}
+        if self.state == State::Running {
+            let res = self.trcv.as_ref().unwrap().snd.send(G2w {
+                sig: ControlSignal::Stop,
+            });
+            self.state = State::Ready;
         }
     }
     fn terminate(&mut self) {}

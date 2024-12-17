@@ -1,8 +1,8 @@
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::core::matrix::matrix::Matrix;
-use crate::core::matrix::matrix::__Matrix;
+use crate::core::matrix::Matrix;
+use crate::core::matrix::__Matrix;
 use crate::core::nn::cost::CostInfo;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -31,16 +31,20 @@ impl NN {
             }
         }
 
-        return NN {
+        NN {
             layers: layers.to_vec(),
             weights,
             biases,
             apps,
-        };
+        }
     }
 
     pub fn len(&self) -> usize {
         self.weights.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() > 0
     }
 
     pub fn process(&mut self) {
@@ -77,7 +81,7 @@ impl NN {
         diff
     }
 
-    pub fn cost(&mut self, inputs: &Vec<Vec<f64>>, expects: &Vec<Vec<f64>>) -> f64 {
+    pub fn cost(&mut self, inputs: &[Vec<f64>], expects: &[Vec<f64>]) -> f64 {
         assert!(inputs.len() == expects.len());
         let n = inputs.len() as f64;
         let mut diff = 0.0;
@@ -89,9 +93,9 @@ impl NN {
         diff / n
     }
 
-    pub fn cost_info(&mut self, inputs: &Vec<Vec<f64>>, expects: &Vec<Vec<f64>>) -> CostInfo {
+    pub fn cost_info(&mut self, inputs: &[Vec<f64>], expects: &[Vec<f64>]) -> CostInfo {
         assert!(inputs.len() == expects.len());
-        let mut cost_info = CostInfo::new();
+        let mut cost_info = CostInfo::default();
         for round in 0..inputs.len() {
             self.set(inputs[round].as_slice());
             self.process();
@@ -100,7 +104,7 @@ impl NN {
         cost_info
     }
 
-    pub fn backprop(&mut self, inputs: &Vec<Vec<f64>>, expects: &Vec<Vec<f64>>) -> Self {
+    pub fn backprop(&mut self, inputs: &[Vec<f64>], expects: &[Vec<f64>]) -> Self {
         let n = inputs.len();
         let mut delta = Self::new(
             self.apps
@@ -152,8 +156,8 @@ impl NN {
 
     pub fn finite_diff(
         &mut self,
-        inputs: &Vec<Vec<f64>>,
-        expects: &Vec<Vec<f64>>,
+        inputs: &[Vec<f64>],
+        expects: &[Vec<f64>],
         epsilon: &f64,
     ) -> Self {
         let cost_original = self.cost(inputs, expects);

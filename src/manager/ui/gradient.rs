@@ -52,13 +52,10 @@ impl Gradient {
             let mid_g = self.mid_color.g;
             let mid_b = self.mid_color.b;
 
-            let r = ((high_r as f32 - mid_r as f32) * ratio + mid_r as f32).round()
-                as u8;
-            let g = ((high_g as f32 - mid_g as f32) * ratio + mid_g as f32).round()
-                as u8;
-            let b = ((high_b as f32 - mid_b as f32) * ratio + mid_b as f32).round()
-                as u8;
-            return Color { r, g, b };
+            let r = ((high_r as f32 - mid_r as f32) * ratio + mid_r as f32).round() as u8;
+            let g = ((high_g as f32 - mid_g as f32) * ratio + mid_g as f32).round() as u8;
+            let b = ((high_b as f32 - mid_b as f32) * ratio + mid_b as f32).round() as u8;
+            Color { r, g, b }
         } else {
             if ratio > 1.0 {
                 return self.low_color;
@@ -72,13 +69,10 @@ impl Gradient {
             let mid_g = self.mid_color.g;
             let mid_b = self.mid_color.b;
 
-            let r = ((low_r as f32 - mid_r as f32) * ratio + mid_r as f32).round()
-                as u8;
-            let g = ((low_g as f32 - mid_g as f32) * ratio + mid_g as f32).round()
-                as u8;
-            let b = ((low_b as f32 - mid_b as f32) * ratio + mid_b as f32).round()
-                as u8;
-            return Color { r, g, b };
+            let r = ((low_r as f32 - mid_r as f32) * ratio + mid_r as f32).round() as u8;
+            let g = ((low_g as f32 - mid_g as f32) * ratio + mid_g as f32).round() as u8;
+            let b = ((low_b as f32 - mid_b as f32) * ratio + mid_b as f32).round() as u8;
+            Color { r, g, b }
         }
     }
 }

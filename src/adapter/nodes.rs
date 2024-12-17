@@ -1,4 +1,4 @@
-use crate::core::{matrix::matrix::__Matrix, nn::nn::NN};
+use crate::core::{matrix::__Matrix, nn::network::NN};
 
 #[derive(Debug, Clone)]
 pub enum Nodetype {
@@ -66,9 +66,7 @@ impl Nodes {
                         }
                     });
 
-                    for (src_idx, w) in
-                        src.weights[level - 1].col(node_idx).iter().enumerate()
-                    {
+                    for (src_idx, w) in src.weights[level - 1].col(node_idx).iter().enumerate() {
                         node_connections.push(Connection {
                             dst: node_idx,
                             dst_level: level,

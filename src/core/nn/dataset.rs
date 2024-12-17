@@ -28,8 +28,8 @@ impl<T: Serialize> Stringfiable for DataSet<T> {
     type Struct = DataSet<T>;
     fn stringfy(src: &Self::Struct) -> Option<String> {
         let output = serde_json::to_string_pretty(&src);
-        if output.is_ok() {
-            return Some(output.unwrap());
+        if let Ok(output) = output {
+            return Some(output);
         }
         None
     }
@@ -40,8 +40,8 @@ impl<T: DeserializeOwned> Buildable for DataSet<T> {
     fn build(str: String) -> Option<Self::Struct> {
         let cloned = str.clone();
         let ss = serde_json::from_str(&cloned);
-        if ss.is_ok() {
-            return ss.unwrap();
+        if let Ok(ss) = ss {
+            return ss;
         }
         None
     }
@@ -55,14 +55,12 @@ impl<T: Serialize> Savable for DataSet<T> {
             Ok(file) => file,
         };
         let str = DataSet::stringfy(data);
-        if str.is_none() {
-            return None;
-        }
+        str.as_ref()?;
         let flag = file.write_all(str.unwrap().as_bytes()).is_ok();
         if flag {
             return Some(true);
         }
-        return None;
+        None
     }
 }
 
@@ -81,9 +79,7 @@ impl<T: DeserializeOwned> Readable for DataSet<T> {
         }
 
         let ss = DataSet::build(buf.to_string());
-        if ss.is_none() {
-            return None;
-        }
+        ss.as_ref()?;
         ss
     }
 }

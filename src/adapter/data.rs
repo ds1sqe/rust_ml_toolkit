@@ -4,7 +4,7 @@ use std::{
     path::Path,
 };
 
-use crate::core::nn::nn::NN;
+use crate::core::nn::network::NN;
 
 // TODO: rename this file
 
@@ -31,8 +31,8 @@ impl Stringfiable for NN {
     type Struct = NN;
     fn stringfy(src: &Self::Struct) -> Option<String> {
         let output = serde_json::to_string_pretty(&src);
-        if output.is_ok() {
-            return Some(output.unwrap());
+        if let Ok(output) = output {
+            return Some(output);
         }
         None
     }
@@ -43,8 +43,8 @@ impl Buildable for NN {
     fn build(str: String) -> Option<Self::Struct> {
         let cloned = str.clone();
         let nn = serde_json::from_str(&cloned);
-        if nn.is_ok() {
-            return nn.unwrap();
+        if let Ok(nn) = nn {
+            return nn;
         }
         None
     }
@@ -58,14 +58,12 @@ impl Savable for NN {
             Ok(file) => file,
         };
         let str = NN::stringfy(data);
-        if str.is_none() {
-            return None;
-        }
+        str.as_ref()?;
         let flag = file.write_all(str.unwrap().as_bytes()).is_ok();
         if flag {
             return Some(true);
         }
-        return None;
+        None
     }
 }
 
@@ -84,9 +82,7 @@ impl Readable for NN {
         }
 
         let nn = NN::build(buf.to_string());
-        if nn.is_none() {
-            return None;
-        }
+        nn.as_ref()?;
         nn
     }
 }
@@ -117,8 +113,7 @@ fn test_data_save_and_read() {
         for (widx, weight) in matrix.el.iter().enumerate() {
             for (wwidx, val) in weight.iter().enumerate() {
                 assert!(
-                    (f64::trunc(saved.weights[idx].el[widx][wwidx] * PRSIZE)
-                        / PRSIZE)
+                    (f64::trunc(saved.weights[idx].el[widx][wwidx] * PRSIZE) / PRSIZE)
                         == (f64::trunc(*val * PRSIZE) / PRSIZE)
                 )
             }
@@ -128,8 +123,7 @@ fn test_data_save_and_read() {
         for (bidx, biase) in matrix.el.iter().enumerate() {
             for (bbidx, val) in biase.iter().enumerate() {
                 assert!(
-                    (f64::trunc(saved.biases[idx].el[bidx][bbidx] * PRSIZE)
-                        / PRSIZE)
+                    (f64::trunc(saved.biases[idx].el[bidx][bbidx] * PRSIZE) / PRSIZE)
                         == (f64::trunc(*val * PRSIZE) / PRSIZE)
                 )
             }

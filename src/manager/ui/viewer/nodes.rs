@@ -16,7 +16,7 @@ pub struct NodesView {
 }
 
 impl NodesView {
-    pub fn view(&mut self, ctx: &eframe::egui::Context, ui: &mut Ui, context: &mut Context) {
+    pub fn view(&mut self, ctx: &eframe::egui::Context, _: &mut Ui, context: &mut Context) {
         eframe::egui::Window::new("NodesViewer")
             .open(&mut self.is_open)
             .resizable(true)
@@ -28,8 +28,8 @@ fn create_node(pos: PlotPoint, node: &Node) -> Points {
     let label = match node {
         Node {
             nodetype: Nodetype::Input,
-            level,
-            bias,
+            level: _,
+            bias: _,
             value,
         } => format!("Type:Input\nValue:{}", value),
         Node {
@@ -43,7 +43,7 @@ fn create_node(pos: PlotPoint, node: &Node) -> Points {
         ),
         Node {
             nodetype: Nodetype::Output,
-            level,
+            level: _,
             bias,
             value,
         } => format!("Type:Output\nBias:{}\nValue:{}", bias, value),
@@ -54,19 +54,17 @@ fn create_node(pos: PlotPoint, node: &Node) -> Points {
     let grad = Gradient::default(10.0, -10.0);
     let Color { r, g, b } = grad.get_color(node.bias as f32);
 
-    let points = Points::new(vec![[pos.x, pos.y]])
+    Points::new(vec![[pos.x, pos.y]])
         .filled(true)
         .shape(egui_plot::MarkerShape::Circle)
         .radius(radius)
         .color(Color32::from_rgb(r, g, b))
-        .name(label);
-
-    points
+        .name(label)
 }
 
 fn visualize(plot_ui: &mut PlotUi, nn: Nodes) {
     for (level, connections) in nn.connections.iter().enumerate() {
-        for (node_idx, node_connections) in connections.iter().enumerate() {
+        for node_connections in connections.iter() {
             for con in node_connections.iter() {
                 let len_src = nn.layers[level];
                 let len_dst = nn.layers[level + 1];
@@ -102,16 +100,15 @@ fn visualize(plot_ui: &mut PlotUi, nn: Nodes) {
         let pos_x = level as f64 * 10.0;
         let count = nodes.len();
         for (nidx, node) in nodes.iter().enumerate() {
-            let pos_y = nidx as f64 * 2.0 - (2.0 / 2.0 * (count - 1) as f64);
+            let pos_y = nidx as f64 * 2.0 - (2.0 / (2 * (count - 1)) as f64);
             plot_ui.points(create_node(PlotPoint::new(pos_x, pos_y), node))
         }
     }
 }
 
 pub fn draw_node(ui: &mut Ui, context: &mut Context) -> Option<Response> {
-    match context.state {
-        State::Empty => return None,
-        _ => (),
+    if context.state == State::Empty {
+        return None;
     }
 
     let x_axes = vec![AxisHints::default().label("Level")];

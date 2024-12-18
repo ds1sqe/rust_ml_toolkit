@@ -12,8 +12,8 @@ pub struct CostInfo {
     pub costs: Vec<Cost>,
 }
 
-impl CostInfo {
-    pub fn new() -> Self {
+impl Default for CostInfo {
+    fn default() -> Self {
         CostInfo {
             total: 0_f64,
             avg: 0_f64,
@@ -22,7 +22,9 @@ impl CostInfo {
             costs: Vec::new(),
         }
     }
+}
 
+impl CostInfo {
     pub fn max(&self) -> &Cost {
         &self.costs[self.max_idx]
     }

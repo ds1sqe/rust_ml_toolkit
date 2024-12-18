@@ -18,20 +18,22 @@ pub struct CostsWindow {
     pub focused_cycle: Option<usize>,
 }
 
-impl CostsWindow {
-    pub fn new() -> Self {
+impl Default for CostsWindow {
+    fn default() -> Self {
         Self {
             is_open: false,
             menu: CostsMenu::Chart,
             focused_cycle: None,
         }
     }
+}
 
+impl CostsWindow {
     pub fn toggle(&mut self) {
         self.is_open = !self.is_open;
     }
 
-    pub fn view(&mut self, ctx: &eframe::egui::Context, ui: &mut Ui, context: &mut Context) {
+    pub fn view(&mut self, ctx: &eframe::egui::Context, _: &mut Ui, context: &mut Context) {
         eframe::egui::Window::new("CostsViewer")
             .open(&mut self.is_open)
             .resizable(true)
@@ -52,7 +54,7 @@ impl CostsWindow {
     }
 }
 
-fn visualize_costs(plot_ui: &mut PlotUi, costs: &Vec<CostInfo>) {
+fn visualize_costs(plot_ui: &mut PlotUi, costs: &[CostInfo]) {
     let chart = BarChart::new(
         costs
             .iter()
@@ -71,12 +73,9 @@ pub fn draw_cost(
     context: &mut Context,
     focus: &mut Option<usize>,
 ) -> Option<Response> {
-    match context.state {
-        State::Empty => {
-            ui.label("Is Blank");
-            return None;
-        }
-        _ => (),
+    if context.state == State::Empty {
+        ui.label("Is Blank");
+        return None;
     }
 
     let x_axes = vec![AxisHints::default().label(format!(
@@ -163,12 +162,9 @@ pub fn draw_cost(
 }
 
 pub fn cost_detail(ui: &mut Ui, context: &mut Context, cycle: &Option<usize>) {
-    match context.state {
-        State::Empty => {
-            ui.label("Is Blank");
-            return;
-        }
-        _ => (),
+    if context.state == State::Empty {
+        ui.label("Is Blank");
+        return;
     }
 
     if cycle.is_some() {

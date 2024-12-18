@@ -1,8 +1,10 @@
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::core::matrix::matrix::Matrix;
-use crate::core::matrix::matrix::__Matrix;
+use crate::core::matrix::Matrix;
+use crate::core::matrix::MatrixDiv;
+use crate::core::matrix::MatrixMul;
+use crate::core::matrix::MatrixOps;
 use crate::core::nn::cost::CostInfo;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -31,16 +33,20 @@ impl NN {
             }
         }
 
-        return NN {
+        NN {
             layers: layers.to_vec(),
             weights,
             biases,
             apps,
-        };
+        }
     }
 
     pub fn len(&self) -> usize {
         self.weights.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() > 0
     }
 
     pub fn process(&mut self) {
@@ -77,7 +83,7 @@ impl NN {
         diff
     }
 
-    pub fn cost(&mut self, inputs: &Vec<Vec<f64>>, expects: &Vec<Vec<f64>>) -> f64 {
+    pub fn cost(&mut self, inputs: &[Vec<f64>], expects: &[Vec<f64>]) -> f64 {
         assert!(inputs.len() == expects.len());
         let n = inputs.len() as f64;
         let mut diff = 0.0;
@@ -89,9 +95,9 @@ impl NN {
         diff / n
     }
 
-    pub fn cost_info(&mut self, inputs: &Vec<Vec<f64>>, expects: &Vec<Vec<f64>>) -> CostInfo {
+    pub fn cost_info(&mut self, inputs: &[Vec<f64>], expects: &[Vec<f64>]) -> CostInfo {
         assert!(inputs.len() == expects.len());
-        let mut cost_info = CostInfo::new();
+        let mut cost_info = CostInfo::default();
         for round in 0..inputs.len() {
             self.set(inputs[round].as_slice());
             self.process();
@@ -100,7 +106,7 @@ impl NN {
         cost_info
     }
 
-    pub fn backprop(&mut self, inputs: &Vec<Vec<f64>>, expects: &Vec<Vec<f64>>) -> Self {
+    pub fn backprop(&mut self, inputs: &[Vec<f64>], expects: &[Vec<f64>]) -> Self {
         let n = inputs.len();
         let mut delta = Self::new(
             self.apps
@@ -117,7 +123,7 @@ impl NN {
             self.process();
 
             for level in 0..delta.len() {
-                delta.apps[level].fill(0.0);
+                delta.apps[level].fill(&0.0);
             }
 
             for oidx in 0..self.output().len() {
@@ -127,7 +133,7 @@ impl NN {
             for level in (1..=self.len()).rev() {
                 for aidx in 0..self.apps[level].len_col() {
                     let a = self.apps[level].at(0, aidx);
-                    let da = delta.apps[level].at(0, aidx);
+                    let da = *delta.apps[level].at(0, aidx);
                     *delta.biases[level - 1].at_mut(0, aidx) += 2.0 * da * a * (1.0 - a);
 
                     for paidx in 0..self.apps[level - 1].len_col() {
@@ -152,8 +158,8 @@ impl NN {
 
     pub fn finite_diff(
         &mut self,
-        inputs: &Vec<Vec<f64>>,
-        expects: &Vec<Vec<f64>>,
+        inputs: &[Vec<f64>],
+        expects: &[Vec<f64>],
         epsilon: &f64,
     ) -> Self {
         let cost_original = self.cost(inputs, expects);
@@ -171,7 +177,7 @@ impl NN {
         for level in 0..self.len() {
             for row in 0..self.weights[level].len_row() {
                 for col in 0..self.weights[level].len_col() {
-                    let saved = self.weights[level].at(row, col);
+                    let saved = *self.weights[level].at(row, col);
                     *self.weights[level].at_mut(row, col) += *epsilon;
                     let cost_renewed = self.cost(inputs, expects);
                     *delta.weights[level].at_mut(row, col) =
@@ -181,7 +187,7 @@ impl NN {
             }
 
             for col in 0..self.biases[level].len_col() {
-                let saved = self.biases[level].at(0, col);
+                let saved = *self.biases[level].at(0, col);
                 *self.biases[level].at_mut(0, col) += *epsilon;
                 let cost_renewed = self.cost(inputs, expects);
                 *delta.biases[level].at_mut(0, col) = (cost_renewed - cost_original) / epsilon;

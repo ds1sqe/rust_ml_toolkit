@@ -17,67 +17,50 @@ pub struct SessionWindow {
     session_save: SessionSave,
 }
 
+impl Default for SessionWindow {
+    fn default() -> Self {
+        Self {
+            is_open: false,
+            menu: SessionMenu::Load,
+            session_load: SessionLoad::default(),
+            session_save: SessionSave::default(),
+        }
+    }
+}
+
 impl SessionWindow {
     pub fn toggle(&mut self) {
         self.is_open = !self.is_open;
     }
-    pub fn new() -> Self {
-        Self {
-            is_open: false,
-            menu: SessionMenu::Load,
-            session_load: SessionLoad::new(),
-            session_save: SessionSave::new(),
-        }
-    }
-    pub fn view(
-        &mut self,
-        ctx: &eframe::egui::Context,
-        ui: &mut Ui,
-        context: &mut Context,
-    ) {
+    pub fn view(&mut self, ctx: &eframe::egui::Context, _: &mut Ui, context: &mut Context) {
         eframe::egui::Window::new("Session Management")
             .open(&mut self.is_open)
             .resizable(true)
             .show(ctx, |ui| {
                 ui.horizontal(|ui| {
-                    ui.selectable_value(
-                        &mut self.menu,
-                        SessionMenu::Load,
-                        "Load Session",
-                    );
-                    ui.selectable_value(
-                        &mut self.menu,
-                        SessionMenu::Save,
-                        "Save Current",
-                    )
+                    ui.selectable_value(&mut self.menu, SessionMenu::Load, "Load Session");
+                    ui.selectable_value(&mut self.menu, SessionMenu::Save, "Save Current")
                 });
                 ui.separator();
 
-                eframe::egui::ScrollArea::vertical().show(ui, |ui| {
-                    match self.menu {
-                        SessionMenu::Load => {
-                            self.session_load.view(ui, context);
-                        }
-                        SessionMenu::Save => {
-                            self.session_save.view(ui, context);
-                        }
-                        _ => {}
+                eframe::egui::ScrollArea::vertical().show(ui, |ui| match self.menu {
+                    SessionMenu::Load => {
+                        self.session_load.view(ui, context);
+                    }
+                    SessionMenu::Save => {
+                        self.session_save.view(ui, context);
                     }
                 })
             });
     }
 }
 
+#[derive(Default)]
 pub struct SessionLoad {
     path: String,
 }
 
 impl SessionLoad {
-    pub fn new() -> Self {
-        Self {
-            path: String::new(),
-        }
-    }
     pub fn view(&mut self, ui: &mut Ui, context: &mut Context) {
         ui.add(eframe::egui::TextEdit::singleline(&mut self.path));
         if ui.button("load").clicked() {
@@ -95,16 +78,12 @@ impl SessionLoad {
     }
 }
 
+#[derive(Default)]
 pub struct SessionSave {
     path: String,
 }
 
 impl SessionSave {
-    pub fn new() -> Self {
-        Self {
-            path: String::new(),
-        }
-    }
     pub fn view(&mut self, ui: &mut Ui, context: &mut Context) {
         ui.add(eframe::egui::TextEdit::singleline(&mut self.path));
         if ui.button("save").clicked() {

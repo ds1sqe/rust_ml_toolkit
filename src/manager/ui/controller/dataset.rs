@@ -25,96 +25,68 @@ pub struct DatasetWindow {
     dataset_save: DatasetSave,
 }
 
-impl DatasetWindow {
-    pub fn new() -> Self {
+impl Default for DatasetWindow {
+    fn default() -> Self {
         Self {
             is_open: false,
             menu: DataSetMenu::View,
-            dataset_view: DatasetView::new(),
+            dataset_view: DatasetView::default(),
             dataset_update: None,
-            dataset_load: DatasetLoad::new(),
-            dataset_save: DatasetSave::new(),
+            dataset_load: DatasetLoad::default(),
+            dataset_save: DatasetSave::default(),
         }
     }
+}
 
+impl DatasetWindow {
     pub fn toggle(&mut self) {
         self.is_open = !self.is_open;
     }
 
-    pub fn view(
-        &mut self,
-        ctx: &eframe::egui::Context,
-        ui: &mut Ui,
-        context: &mut Context,
-    ) {
+    pub fn view(&mut self, ctx: &eframe::egui::Context, _: &mut Ui, context: &mut Context) {
         eframe::egui::Window::new("Dataset Management")
             .open(&mut self.is_open)
             .resizable(true)
             .show(ctx, |ui| {
                 ui.horizontal(|ui| {
-                    ui.selectable_value(
-                        &mut self.menu,
-                        DataSetMenu::View,
-                        "View Current",
-                    );
-                    ui.selectable_value(
-                        &mut self.menu,
-                        DataSetMenu::Edit,
-                        "Edit Current",
-                    );
-                    ui.selectable_value(
-                        &mut self.menu,
-                        DataSetMenu::Load,
-                        "Load from File",
-                    );
-                    ui.selectable_value(
-                        &mut self.menu,
-                        DataSetMenu::Save,
-                        "Save Current",
-                    );
+                    ui.selectable_value(&mut self.menu, DataSetMenu::View, "View Current");
+                    ui.selectable_value(&mut self.menu, DataSetMenu::Edit, "Edit Current");
+                    ui.selectable_value(&mut self.menu, DataSetMenu::Load, "Load from File");
+                    ui.selectable_value(&mut self.menu, DataSetMenu::Save, "Save Current");
                 });
                 ui.separator();
 
-                eframe::egui::ScrollArea::vertical().show(ui, |ui| {
-                    match self.menu {
-                        DataSetMenu::View => {
-                            self.dataset_update = None;
-                            self.dataset_view.view(ui, context);
+                eframe::egui::ScrollArea::vertical().show(ui, |ui| match self.menu {
+                    DataSetMenu::View => {
+                        self.dataset_update = None;
+                        self.dataset_view.view(ui, context);
+                    }
+                    DataSetMenu::Edit => {
+                        if self.dataset_update.is_none() {
+                            self.dataset_update = Some(DatasetUpdate::new(
+                                self.dataset_view.inputs.clone(),
+                                self.dataset_view.outputs.clone(),
+                            ));
                         }
-                        DataSetMenu::Edit => {
-                            if self.dataset_update.is_none() {
-                                self.dataset_update = Some(DatasetUpdate::new(
-                                    self.dataset_view.inputs.clone(),
-                                    self.dataset_view.outputs.clone(),
-                                ));
-                            }
-                            self.dataset_update.as_mut().unwrap().view(ui, context);
-                        }
-                        DataSetMenu::Load => {
-                            self.dataset_load.view(ui, context);
-                        }
-                        DataSetMenu::Save => {
-                            self.dataset_save.view(ui, context);
-                        }
+                        self.dataset_update.as_mut().unwrap().view(ui, context);
+                    }
+                    DataSetMenu::Load => {
+                        self.dataset_load.view(ui, context);
+                    }
+                    DataSetMenu::Save => {
+                        self.dataset_save.view(ui, context);
                     }
                 })
             });
     }
 }
 
+#[derive(Default)]
 pub struct DatasetView {
     inputs: Vec<String>,
     outputs: Vec<String>,
 }
 
-impl DatasetView {
-    pub fn new() -> Self {
-        Self {
-            inputs: Vec::new(),
-            outputs: Vec::new(),
-        }
-    }
-}
 impl DatasetView {
     pub fn view(&mut self, ui: &mut Ui, context: &mut Context) {
         match context.state {
@@ -163,9 +135,9 @@ impl DatasetView {
         for idx in 0..self.inputs.len() {
             ui.label(format!("Index:{idx}"));
             ui.label("Input");
-            ui.label(format!("{}", self.inputs[idx]));
+            ui.label(self.inputs[idx].to_string());
             ui.label("Output");
-            ui.label(format!("{}", self.outputs[idx]));
+            ui.label(self.outputs[idx].to_string());
         }
     }
 }
@@ -224,17 +196,12 @@ impl DatasetUpdate {
     }
 }
 
+#[derive(Default)]
 pub struct DatasetSave {
     path: String,
 }
 
 impl DatasetSave {
-    pub fn new() -> Self {
-        Self {
-            path: String::new(),
-        }
-    }
-
     pub fn view(&mut self, ui: &mut Ui, context: &mut Context) {
         ui.add(eframe::egui::TextEdit::singleline(&mut self.path));
         if ui.button("save").clicked() {
@@ -252,17 +219,12 @@ impl DatasetSave {
     }
 }
 
+#[derive(Default)]
 pub struct DatasetLoad {
     path: String,
 }
 
 impl DatasetLoad {
-    pub fn new() -> Self {
-        Self {
-            path: String::new(),
-        }
-    }
-
     pub fn view(&mut self, ui: &mut Ui, context: &mut Context) {
         ui.add(eframe::egui::TextEdit::singleline(&mut self.path));
         if ui.button("load").clicked() {

@@ -3,7 +3,7 @@ use std::{fs::File, io::BufWriter, path::Path};
 use log::debug;
 use png::ColorType;
 
-use crate::core::matrix::matrix::{Matrix, __Matrix};
+use crate::core::matrix::{Matrix, MatrixOps};
 
 #[derive(Debug)]
 pub enum ImgError {
@@ -53,11 +53,11 @@ pub fn png2mat(file: File) -> Result<ImageMatrix, ImgError> {
         }
     }
 
-    return Ok(ImageMatrix {
+    Ok(ImageMatrix {
         height: info.height,
         width: info.width,
         mat,
-    });
+    })
 }
 
 /// encode provided matrix into 8bit grayscale image(png) file.
@@ -67,7 +67,6 @@ pub fn png2mat(file: File) -> Result<ImageMatrix, ImgError> {
 ///
 /// This function will return an error if failed to encode img
 ///
-
 pub fn mat2png(imat: ImageMatrix, path: &Path) -> Result<(), ImgError> {
     let file = File::create(path);
 
@@ -77,7 +76,7 @@ pub fn mat2png(imat: ImageMatrix, path: &Path) -> Result<(), ImgError> {
 
     let file = file.unwrap();
 
-    let ref mut writer = BufWriter::new(file);
+    let writer = &mut BufWriter::new(file);
 
     let mut encoder = png::Encoder::new(writer, imat.width, imat.height);
 
@@ -92,14 +91,14 @@ pub fn mat2png(imat: ImageMatrix, path: &Path) -> Result<(), ImgError> {
     for yidx in 0..imat.height {
         for xidx in 0..imat.width {
             let idx = (yidx * imat.width + xidx) as usize;
-            buf[idx] = (imat.mat.at(idx, 2) * 255 as f64) as u8
+            buf[idx] = (imat.mat.at(idx, 2) * 255_f64) as u8
         }
     }
 
     if writer.write_image_data(&buf).is_ok() {
-        return Ok(());
+        Ok(())
     } else {
-        return Err(ImgError::EncodeError);
+        Err(ImgError::EncodeError)
     }
 }
 
@@ -116,8 +115,8 @@ fn test_png2mat() {
 
     for yidx in 0..HEIGHT {
         for xidx in 0..WIDTH {
-            let idx = (yidx * WIDTH + xidx) as usize;
-            print!("{:>4}", (mat.mat.at(idx, 2) * 255 as f64) as u8)
+            let idx = yidx * WIDTH + xidx;
+            print!("{:>4}", (mat.mat.at(idx, 2) * 255_f64) as u8)
         }
         println!()
     }
@@ -136,8 +135,8 @@ fn test_mat2png() {
 
     for yidx in 0..HEIGHT {
         for xidx in 0..WIDTH {
-            let idx = (yidx * WIDTH + xidx) as usize;
-            print!("{:>4}", (mat.mat.at(idx, 2) * 255 as f64) as u8)
+            let idx = yidx * WIDTH + xidx;
+            print!("{:>4}", (mat.mat.at(idx, 2) * 255_f64) as u8)
         }
         println!()
     }

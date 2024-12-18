@@ -4,7 +4,7 @@ use std::{
     time::Duration,
 };
 
-use crate::core::nn::{cost::CostInfo, nn::NN};
+use crate::core::nn::{cost::CostInfo, network::NN};
 
 use super::{nodes::Nodes, session::Session};
 
@@ -78,7 +78,7 @@ pub fn spawn_learner(session: Session, rx: Receiver<G2w>) -> Receiver<W2g> {
 
     thread::spawn(move || handle(rx, snd, session));
 
-    return rec;
+    rec
 }
 
 pub fn handle(rx: Receiver<G2w>, snd: Sender<W2g>, session: Session) {
@@ -88,20 +88,18 @@ pub fn handle(rx: Receiver<G2w>, snd: Sender<W2g>, session: Session) {
     loop {
         let g2w = rx.recv_timeout(Duration::from_micros(1000));
 
-        match g2w {
-            Ok(g2w) => {
-                println!("got signal from gui thread {:?}", g2w);
-                match g2w.sig {
-                    ControlSignal::Pause => loop {
-                        // TODO: control start here
-                    },
-                    ControlSignal::Stop => {
-                        // manage Stop here
-                        return;
-                    }
+        if let Ok(g2w) = g2w {
+            println!("got signal from gui thread {:?}", g2w);
+            match g2w.sig {
+                ControlSignal::Pause => loop {
+                    // TODO: control start here
+                    std::thread::sleep(Duration::from_millis(100));
+                },
+                ControlSignal::Stop => {
+                    // manage Stop here
+                    return;
                 }
             }
-            Err(_) => {}
         }
 
         session.train();
@@ -112,11 +110,12 @@ pub fn handle(rx: Receiver<G2w>, snd: Sender<W2g>, session: Session) {
         let nodes = Some(Nodes::from(&session.model));
         let cost_info = session.cost();
 
-        let snd_res = snd.send(W2g {
+        snd.send(W2g {
             cycle: cycle * session.option.cycle,
             cost_info,
             nodes,
             model: Some(session.model.clone()),
-        });
+        })
+        .expect("failed to send packet worker to global")
     }
 }

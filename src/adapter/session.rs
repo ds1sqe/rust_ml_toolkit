@@ -5,7 +5,7 @@ use std::io::Write;
 use std::path::Path;
 
 use crate::core::nn::cost::CostInfo;
-use crate::core::nn::{dataset::DataSet, nn::NN};
+use crate::core::nn::{dataset::DataSet, network::NN};
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -54,11 +54,11 @@ impl Session {
 
                 let delta = match self.option.train_method {
                     TrainingMethod::FiniteDiff { rate, eps } => {
-                        let mut delta = self.model.finite_diff(&inputs, &expects, &eps);
+                        let mut delta = self.model.finite_diff(inputs, expects, &eps);
                         delta.mul(&rate);
                         delta
                     }
-                    TrainingMethod::BackProp => self.model.backprop(&inputs, &expects),
+                    TrainingMethod::BackProp => self.model.backprop(inputs, expects),
                 };
 
                 self.model.learn(&delta)
@@ -82,12 +82,12 @@ impl Session {
         match self.dataset.clone() {
             None => {
                 println!("Session>>train_single: Dataset is None");
-                return None;
+                None
             }
             Some(ds) => {
                 let inputs = &ds.inputs;
                 let expects = &ds.outputs;
-                return Some(self.model.cost_info(inputs, expects));
+                Some(self.model.cost_info(inputs, expects))
             }
         }
     }
@@ -97,8 +97,8 @@ impl Stringfiable for Session {
     type Struct = Session;
     fn stringfy(src: &Self::Struct) -> Option<String> {
         let output = serde_json::to_string_pretty(&src);
-        if output.is_ok() {
-            return Some(output.unwrap());
+        if let Ok(output) = output {
+            return Some(output);
         }
         None
     }
@@ -109,8 +109,8 @@ impl Buildable for Session {
     fn build(str: String) -> Option<Self::Struct> {
         let cloned = str.clone();
         let ss = serde_json::from_str(&cloned);
-        if ss.is_ok() {
-            return ss.unwrap();
+        if let Ok(ss) = ss {
+            return ss;
         }
         None
     }
@@ -123,15 +123,12 @@ impl Savable for Session {
             Err(e) => panic!("could not create at {}: {}", path.display(), e),
             Ok(file) => file,
         };
-        let str = Session::stringfy(data);
-        if str.is_none() {
-            return None;
-        }
-        let flag = file.write_all(str.unwrap().as_bytes()).is_ok();
+        let str = Session::stringfy(data)?;
+        let flag = file.write_all(str.as_bytes()).is_ok();
         if flag {
             return Some(true);
         }
-        return None;
+        None
     }
 }
 
@@ -150,9 +147,7 @@ impl Readable for Session {
         }
 
         let ss = Session::build(buf.to_string());
-        if ss.is_none() {
-            return None;
-        }
+        ss.as_ref()?;
         ss
     }
 }

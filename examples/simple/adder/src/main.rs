@@ -3,7 +3,7 @@ use std::path::Path;
 use rust_ml_toolkit::{adapter::context::Context, core::nn::dataset::DataSet};
 
 fn main() {
-    /// this is example of creating adder model
+    // this is example of creating adder model
 
     const BITS: usize = 4;
 

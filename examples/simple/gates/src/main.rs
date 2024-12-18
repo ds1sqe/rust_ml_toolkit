@@ -1,4 +1,4 @@
-use rust_ml_toolkit::core::nn::nn;
+use rust_ml_toolkit::core::nn::network;
 
 fn main() {
     // using finite_diff
@@ -14,7 +14,7 @@ fn main() {
 
     let eps = 1e-4;
     let rate = 1e-2;
-    let mut nt = nn::NN::new(&layers);
+    let mut nt = network::NN::new(&layers);
 
     nt.rand();
     println!("{:?}", nt);

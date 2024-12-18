@@ -3,7 +3,7 @@ use std::{fs::File, io::BufWriter, path::Path};
 use log::debug;
 use png::ColorType;
 
-use crate::core::matrix::{Matrix, __Matrix};
+use crate::core::matrix::{Matrix, MatrixOps};
 
 #[derive(Debug)]
 pub enum ImgError {

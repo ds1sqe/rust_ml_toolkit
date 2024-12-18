@@ -1,4 +1,4 @@
-use crate::core::{matrix::__Matrix, nn::network::NN};
+use crate::core::{matrix::MatrixOps, nn::network::NN};
 
 #[derive(Debug, Clone)]
 pub enum Nodetype {
@@ -43,7 +43,7 @@ impl Nodes {
                         nodetype: Nodetype::Input,
                         level,
                         bias: 0.0,
-                        value: src.apps[0].at(0, col),
+                        value: *src.apps[0].at(0, col),
                     })
                 }
                 nodes.push(input_nodes);
@@ -61,8 +61,8 @@ impl Nodes {
                                 Nodetype::Output
                             },
                             level,
-                            bias: src.biases[level - 1].at(0, node_idx),
-                            value: src.apps[level].at(0, node_idx),
+                            bias: *src.biases[level - 1].at(0, node_idx),
+                            value: *src.apps[level].at(0, node_idx),
                         }
                     });
 

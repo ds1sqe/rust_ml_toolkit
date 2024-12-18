@@ -2,7 +2,9 @@ use serde::Deserialize;
 use serde::Serialize;
 
 use crate::core::matrix::Matrix;
-use crate::core::matrix::__Matrix;
+use crate::core::matrix::MatrixDiv;
+use crate::core::matrix::MatrixMul;
+use crate::core::matrix::MatrixOps;
 use crate::core::nn::cost::CostInfo;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -121,7 +123,7 @@ impl NN {
             self.process();
 
             for level in 0..delta.len() {
-                delta.apps[level].fill(0.0);
+                delta.apps[level].fill(&0.0);
             }
 
             for oidx in 0..self.output().len() {
@@ -131,7 +133,7 @@ impl NN {
             for level in (1..=self.len()).rev() {
                 for aidx in 0..self.apps[level].len_col() {
                     let a = self.apps[level].at(0, aidx);
-                    let da = delta.apps[level].at(0, aidx);
+                    let da = *delta.apps[level].at(0, aidx);
                     *delta.biases[level - 1].at_mut(0, aidx) += 2.0 * da * a * (1.0 - a);
 
                     for paidx in 0..self.apps[level - 1].len_col() {
@@ -175,7 +177,7 @@ impl NN {
         for level in 0..self.len() {
             for row in 0..self.weights[level].len_row() {
                 for col in 0..self.weights[level].len_col() {
-                    let saved = self.weights[level].at(row, col);
+                    let saved = *self.weights[level].at(row, col);
                     *self.weights[level].at_mut(row, col) += *epsilon;
                     let cost_renewed = self.cost(inputs, expects);
                     *delta.weights[level].at_mut(row, col) =
@@ -185,7 +187,7 @@ impl NN {
             }
 
             for col in 0..self.biases[level].len_col() {
-                let saved = self.biases[level].at(0, col);
+                let saved = *self.biases[level].at(0, col);
                 *self.biases[level].at_mut(0, col) += *epsilon;
                 let cost_renewed = self.cost(inputs, expects);
                 *delta.biases[level].at_mut(0, col) = (cost_renewed - cost_original) / epsilon;
